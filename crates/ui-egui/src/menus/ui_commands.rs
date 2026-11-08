@@ -231,6 +231,9 @@ pub const UI_COMMANDS: &[UiCommand] = &[
     // Settings) says (#2672, `lightroom_destination`)
     ("file.importLightroom", "Import Lightroom Catalog…", None, "File"),
     ("file.addFromDevice", "Import from Device", None, ""),
+    // {camera: an id from library.devices, album?}: the Import module on that camera
+    ("import.camera", "Import from Camera…", None, ""),
+    ("import.cameraClose", "Close Import", None, ""),
     ("file.findMissing", "Find Missing Photos…", None, "File"),
     ("file.backupLibrary", "Back Up Library…", None, "File"),
     ("file.restoreLibrary", "Restore Library from Backup…", None, "File"),

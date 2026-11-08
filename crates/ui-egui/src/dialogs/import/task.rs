@@ -445,6 +445,7 @@ fn undo_label(task: &ImportTask) -> String {
 /// The import is done (or cancelled): one undo step, show and select the first photo (unless the
 /// user chose another meanwhile), say what happened.
 fn finish(app: &mut LightcraftApp, ctx: &egui::Context, task: ImportTask) {
+    crate::camera_module::import_finished(app, &task);
     let steps = app.session.undo.len().saturating_sub(task.undo0);
     app.session.merge_undo(steps, &undo_label(&task));
     if task.auto || task.browse {

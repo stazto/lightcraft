@@ -449,24 +449,29 @@ pub fn show(app: &mut crate::LightcraftApp, ui: &mut egui::Ui) {
     );
     if let Some(mut canvas) = canvas {
         let ui = &mut canvas;
-        crate::panels::bottombar::show(app, ui);
-        let bg = if matches!(
-            app.ui.view,
-            crate::state::ViewMode::Detail | crate::state::ViewMode::Compare | crate::state::ViewMode::Survey | crate::state::ViewMode::Reference
-        ) {
-            t.canvas
+        // the Import module takes the whole photo area, without the library's bottom bar
+        if crate::camera_module::is_open(app) {
+            egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.grid_bg)).show(ui, |ui| crate::camera_module::show_center(app, ui));
         } else {
-            t.grid_bg
-        };
-        crate::panels::compare::prepare(app);
-        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(bg)).show(ui, |ui| match app.ui.view {
-            crate::state::ViewMode::PhotoGrid | crate::state::ViewMode::SquareGrid => crate::panels::grid::show(app, ui),
-            crate::state::ViewMode::Detail => crate::panels::detail::show(app, ui),
-            crate::state::ViewMode::Compare => crate::panels::compare::show_compare(app, ui),
-            crate::state::ViewMode::Survey => crate::panels::compare::show_survey(app, ui),
-            crate::state::ViewMode::Reference => crate::panels::compare::show_reference(app, ui),
-            crate::state::ViewMode::People => crate::panels::people::show(app, ui),
-        });
+            crate::panels::bottombar::show(app, ui);
+            let bg = if matches!(
+                app.ui.view,
+                crate::state::ViewMode::Detail | crate::state::ViewMode::Compare | crate::state::ViewMode::Survey | crate::state::ViewMode::Reference
+            ) {
+                t.canvas
+            } else {
+                t.grid_bg
+            };
+            crate::panels::compare::prepare(app);
+            egui::CentralPanel::default().frame(egui::Frame::NONE.fill(bg)).show(ui, |ui| match app.ui.view {
+                crate::state::ViewMode::PhotoGrid | crate::state::ViewMode::SquareGrid => crate::panels::grid::show(app, ui),
+                crate::state::ViewMode::Detail => crate::panels::detail::show(app, ui),
+                crate::state::ViewMode::Compare => crate::panels::compare::show_compare(app, ui),
+                crate::state::ViewMode::Survey => crate::panels::compare::show_survey(app, ui),
+                crate::state::ViewMode::Reference => crate::panels::compare::show_reference(app, ui),
+                crate::state::ViewMode::People => crate::panels::people::show(app, ui),
+            });
+        }
     }
 
     let rendered = workspace;

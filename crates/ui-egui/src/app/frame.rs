@@ -1,6 +1,6 @@
 use super::{
-    LightcraftApp, camera_import, docking, drop_overlay, export_task, focus_scan, import, lightroom_import, merge, model_setup, monotonic_ms, panels,
-    pick, recheck, shortcuts, slideshow_export, state, sync, tasks, theme, widgets,
+    LightcraftApp, camera_import, camera_module, docking, drop_overlay, export_task, focus_scan, import, lightroom_import, merge, model_setup,
+    monotonic_ms, panels, pick, recheck, shortcuts, slideshow_export, state, sync, tasks, theme, widgets,
 };
 
 impl LightcraftApp {
@@ -68,6 +68,7 @@ impl LightcraftApp {
         }
         panels::library_problem::import_waiting(self, ctx);
         lightroom_import::tick(self, ctx);
+        camera_module::tick(self, ctx);
         camera_import::tick(self, ctx);
         recheck::tick(self);
         tasks::poll(self, ctx);

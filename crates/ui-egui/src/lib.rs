@@ -8,6 +8,7 @@
 
 pub mod brush_live;
 pub mod camera_import;
+pub mod camera_module;
 pub mod canvas_keys;
 mod command_error;
 pub mod control;
@@ -304,6 +305,8 @@ pub struct LightcraftApp {
     pub scan: Option<import::ScanTask>,
     /// Copies from cameras over USB whose folders are reviewed when they end.
     pub camera_imports: Vec<camera_import::Pending>,
+    /// The Import module open on a camera over USB (the review dialog serves cards and folders).
+    pub camera_module: Option<camera_module::CameraModule>,
     /// Files that waited for a library and wait for the running import or Synchronize Folder too.
     pub waiting_import: panels::library_problem::WaitingImport,
     /// A Synchronize Folder scan in progress (feeds its dialog).

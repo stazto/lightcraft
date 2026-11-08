@@ -431,6 +431,22 @@ impl Cameras {
         out
     }
 
+    /// The copy from camera `id`, if it has ended: removed from the list and handed over (the
+    /// copies of other cameras stay for [`Cameras::take_finished`]).
+    pub fn take_finished_of(&self, id: &str) -> Option<State> {
+        let mut inner = self.inner();
+        let ended = inner.jobs.get(id).is_some_and(|j| !matches!(j.get(), State::Running { .. }));
+        if !ended {
+            return None;
+        }
+        inner.jobs.remove(id).map(|j| j.get())
+    }
+
+    /// Where the copy from camera `id` stands, if one was started and not yet taken.
+    pub fn state_of(&self, id: &str) -> Option<State> {
+        self.inner().jobs.get(id).map(|j| j.get())
+    }
+
     /// Ask the copy from camera `id` to stop. `true` if one was running.
     pub fn cancel(&self, id: &str) -> bool {
         match self.inner().jobs.get(id) {

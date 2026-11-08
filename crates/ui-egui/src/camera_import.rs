@@ -66,6 +66,7 @@ pub fn tick(app: &mut LightcraftApp, ctx: &egui::Context) {
     use lightcraft_engine::camera_fetch::State;
     for (camera, state) in app.session.cameras.take_finished() {
         let Some(pos) = app.camera_imports.iter().position(|p| p.camera == camera && !p.importing) else { continue };
+        crate::camera_module::copy_ended(app, &camera, &state);
         match state {
             State::Done { targets, .. } if !targets.is_empty() => {
                 if app.import.is_some() {

@@ -32,6 +32,11 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let frame = egui::Frame::NONE.fill(t.chrome).stroke(egui::Stroke::new(1.0, t.divider));
     frame.show(ui, |ui| {
+        // the Import module's options take the panel while it is open
+        if crate::camera_module::is_open(app) {
+            crate::camera_module::show_options(app, ui);
+            return;
+        }
         // (taken on every pass the panel is drawn; one from earlier than the pass before is forgotten)
         let held = held_offset(ui.ctx());
         let Some(id) = app.session.active() else {

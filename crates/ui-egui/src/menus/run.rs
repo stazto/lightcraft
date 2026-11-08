@@ -59,10 +59,10 @@ fn add_from_device(app: &mut LightcraftApp, ctx: &egui::Context, p: &Value) -> R
             None => return Err("no camera or memory card found".into()),
         },
     };
-    // a camera over USB: the review lists the camera itself; its Import copies what is picked
+    // a camera over USB: the Import module fills the window with the camera's photos
     if let Some(camera) = lightcraft_engine::devices::devices_now().into_iter().find(|d| d.camera.is_some() && d.path == path) {
         let _ = ctx;
-        return crate::import::open_camera(app, &camera, p.get("album").and_then(Value::as_u64));
+        return crate::camera_module::open(app, &camera, p.get("album").and_then(Value::as_u64));
     }
     let r = crate::import::open(app, vec![path]);
     // only the scan just started (an error means another scan is running)
@@ -1494,6 +1494,12 @@ fn ui_commands_11(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Va
 fn ui_commands_12(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Value) -> Option<Result<Value, String>> {
     let r: Result<Value, String> = match id {
         "file.exportCurvePresets" => file_export_curve_presets_command(app, ctx, id, p),
+        "import.camera" => crate::camera_module::command(app, p),
+        "import.cameraClose" => {
+            let was = crate::camera_module::is_open(app);
+            crate::camera_module::close(app);
+            Ok(json!({"closed": was}))
+        }
         "app.export" => crate::control::export_active(app, p),
         "app.showInFinder" => show_in_finder(app),
         "app.showInFolders" => show_in_folders(app, p.get("id").and_then(Value::as_u64).map(lightcraft_catalog::PhotoId)),
@@ -1515,6 +1521,8 @@ fn ui_commands_12(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Va
 fn view_back_command(app: &mut LightcraftApp, ctx: &egui::Context) -> Result<Value, String> {
     if app.ui.dialog.is_some() {
         app.ui.dialog = None;
+    } else if crate::camera_module::is_open(app) {
+        crate::camera_module::close(app);
     } else if app.ui.lights_out != crate::state::LightsOut::On {
         app.ui.lights_out = crate::state::LightsOut::On;
     } else if app.ui.keyword_painter.is_some() {

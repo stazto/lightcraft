@@ -157,6 +157,8 @@ pub fn inspect(app: &LightcraftApp, ctx: &egui::Context) -> Value {
         "scan": app.scan.as_ref().map(crate::import::ScanTask::status),
         "export": {"running": app.export.as_ref().map(crate::export_task::ExportTask::status), "last": app.last_export_result},
         "import": app.import.as_ref().map(crate::import::ImportTask::status),
+        // the Import module open on a camera over USB
+        "cameraModule": crate::camera_module::status(app),
         "tasks": app.tasks.labels(),
         // every long-running task in flight, as the activity stack shows them (`activity.list`)
         "activity": app.session.activity.list(),

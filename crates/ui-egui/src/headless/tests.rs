@@ -5105,3 +5105,113 @@ fn export_sizes_keep_the_pixels_typed() {
     type_value(&mut h, "sliderValue:export.sizeH", "1350");
     assert_eq!((resize(&h).value, resize(&h).height), (1080.0, 1350));
 }
+
+/// The Import module (a camera over USB): its photos fill the window by capture day with a checkbox
+/// each (a click toggles, Shift extends the range; what the library has cannot be checked), as a
+/// grid, a list or one photo at a time; the right panel holds the import options; the library's
+/// bottom bar goes and the module picker lights Import while it is open; closing brings the library back.
+#[test]
+fn the_import_module_lists_a_camera_by_day_and_checks_photos() {
+    let mut h = demo([1400.0, 900.0]);
+    let t = Duration::from_secs(10);
+    let cand = |handle: u32, name: &str, size: u64, captured: &str| lightcraft_engine::import::ImportCandidate {
+        path: lightcraft_engine::import::ptp_path("cam-test", handle, &format!("DCIM/100CANON/{name}")),
+        name: name.into(),
+        format: "CR3".into(),
+        kind: lightcraft_catalog::MediaKind::Raw,
+        file_size: size,
+        captured: Some(captured.into()),
+        ..Default::default()
+    };
+    let mut dup = cand(5, "IMG_0005.CR3", 50, "2026-03-13T09:00:00");
+    dup.duplicate = Some("content".into());
+    let candidates = vec![
+        cand(1, "IMG_0001.CR3", 10, "2026-03-12T14:25:01"),
+        cand(2, "IMG_0002.CR3", 20, "2026-03-12T14:26:01"),
+        cand(3, "IMG_0003.CR3", 30, "2026-03-12T14:27:01"),
+        cand(4, "IMG_0004.CR3", 40, "2026-03-13T08:00:00"),
+        dup,
+    ];
+    crate::camera_module::open_with(&mut h.app, "cam-test", "Canon EOS RP", candidates);
+    h.settle(SETTLE);
+    let widgets = |h: &mut Headless| h.request("ui.widgets", json!({}), t).to_string();
+    let w = widgets(&mut h);
+    for id in [
+        "\"cameraImport:view\"",
+        "\"cameraImport:cell:0\"",
+        "\"cameraImport:cell:4\"",
+        "\"group:cameraImport:2026-03-12\"",
+        "\"group:cameraImport:2026-03-13\"",
+        "\"module:import\"",
+        "\"button:cameraImportSelected\"",
+        "\"button:cameraImportAll\"",
+        "\"field:cameraImportSubfolder\"",
+        "\"field:cameraImportBatch\"",
+        "\"check:cameraImportByDate\"",
+        "\"button:cameraImportClose\"",
+    ] {
+        assert!(w.contains(id), "{id} missing: {w}");
+    }
+    assert!(!w.contains("\"icon:photoGrid\""), "the library's bottom bar is hidden: {w}");
+    let painted = h.painted_text();
+    assert!(painted.iter().any(|s| s == "Import Selected (4)"), "the importable photos start checked: {painted:?}");
+    assert!(painted.iter().any(|s| s == "Import All (4)"), "{painted:?}");
+    assert!(painted.iter().any(|s| s == "In library"), "the duplicate is badged: {painted:?}");
+    let m = h.app.camera_module.as_ref().expect("open");
+    assert_eq!((m.checked_count(), m.importable_count(), m.is_checked(4)), (4, 4, false));
+    // a click unchecks; Shift-click extends the range (0..=2 unchecked)
+    h.request("ui.clickWidget", json!({"id": "cameraImport:cell:0"}), t);
+    h.settle(SETTLE);
+    assert!(!h.app.camera_module.as_ref().expect("open").is_checked(0));
+    h.request("ui.clickWidget", json!({"id": "cameraImport:cell:2", "shift": true}), t);
+    h.settle(SETTLE);
+    let m = h.app.camera_module.as_ref().expect("open");
+    assert_eq!((m.is_checked(1), m.is_checked(2), m.is_checked(3)), (false, false, true), "Shift extends from the last click");
+    // the duplicate cannot be checked
+    h.request("ui.clickWidget", json!({"id": "cameraImport:cell:4"}), t);
+    h.settle(SETTLE);
+    assert!(!h.app.camera_module.as_ref().expect("open").is_checked(4));
+    assert!(h.painted_text().iter().any(|s| s == "Import Selected (1)"));
+    // the day's header checks the whole day
+    h.request("ui.clickWidget", json!({"id": "group:cameraImport:2026-03-12"}), t);
+    h.settle(SETTLE);
+    assert_eq!(h.app.camera_module.as_ref().expect("open").checked_count(), 4);
+    // the list: one row per photo with name, date, size and format
+    h.request("ui.clickWidget", json!({"id": "button:cameraImportLayout-list"}), t);
+    h.settle(SETTLE);
+    let w = widgets(&mut h);
+    assert!(w.contains("\"cameraImport:row:0\"") && w.contains("\"cameraImport:row:4\"") && !w.contains("\"cameraImport:cell:0\""), "{w}");
+    let painted = h.painted_text();
+    for text in ["IMG_0001.CR3", "2026-03-12 14:25", "40 B", "CR3", "Name", "Date", "Size", "Format"] {
+        assert!(painted.iter().any(|s| s == text), "{text}: {painted:?}");
+    }
+    // one photo at a time: previous / next; the full photo is asked of the camera (none here: it says so)
+    h.request("ui.clickWidget", json!({"id": "button:cameraImportLayout-loupe"}), t);
+    h.settle(SETTLE);
+    let w = widgets(&mut h);
+    assert!(w.contains("\"cameraImport:loupe\"") && w.contains("\"icon:cameraImportNext\"") && w.contains("\"label:cameraImportCaption\""), "{w}");
+    h.request("ui.clickWidget", json!({"id": "icon:cameraImportNext"}), t);
+    h.settle(SETTLE);
+    let m = h.app.camera_module.as_ref().expect("open");
+    assert_eq!(m.current, 1);
+    assert!(m.preview.as_ref().is_some_and(|p| p.index == 1 && p.failed.is_some()), "no camera answers: the loupe says why: {:?}", m.preview);
+    let inspect = h.request("ui.inspect", json!({}), t);
+    assert_eq!(inspect["result"]["cameraModule"]["layout"], "loupe", "{inspect}");
+    assert_eq!(inspect["result"]["cameraModule"]["checked"], 4);
+    // the options: a batch name renames the copies, a subfolder goes inside the destination
+    h.app.camera_module.as_mut().expect("open").batch = "Lote".into();
+    h.app.camera_module.as_mut().expect("open").subfolder = "Viagem".into();
+    let m = h.app.camera_module.as_ref().expect("open");
+    assert_eq!(m.rename_template(), "Lote-{seq:4}");
+    assert_eq!(m.organize(), ("custom".to_string(), "Viagem/{date:%Y}/{date:%Y-%m-%d}".to_string()));
+    h.settle(SETTLE);
+    let painted = h.painted_text();
+    assert!(painted.iter().any(|s| s.starts_with("Example: Originals/Viagem/2026/2026-03-12/Lote-0001.CR3")), "{painted:?}");
+    // closing brings the library back
+    let r = h.request("engine.execute", json!({"command": "import.cameraClose"}), t);
+    assert_eq!(r["ok"], true, "{r}");
+    h.settle(SETTLE);
+    assert!(h.app.camera_module.is_none());
+    let w = widgets(&mut h);
+    assert!(w.contains("\"icon:photoGrid\"") && !w.contains("\"module:import\"") && !w.contains("\"cameraImport:view\""), "{w}");
+}

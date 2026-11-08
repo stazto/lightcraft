@@ -124,7 +124,13 @@ fn the_top_bar_imports_in_every_library() {
     h.step();
     assert!(has(&h, "icon:import"));
     let asked = counting_picker(&mut h);
+    // "+" opens the import menu: Import Photos… is its first entry
     assert_eq!(h.request("ui.clickWidget", json!({"id": "icon:import"}), T)["ok"], true);
+    h.step();
+    h.step();
+    assert!(has(&h, "menu:importPhotos") && has(&h, "menu:importFolder"), "the import menu is open");
+    assert_eq!(asked.get(), 0, "nothing is asked until an entry is chosen");
+    assert_eq!(h.request("ui.clickWidget", json!({"id": "menu:importPhotos"}), T)["ok"], true);
     h.step();
     assert_eq!(asked.get(), 1);
 }

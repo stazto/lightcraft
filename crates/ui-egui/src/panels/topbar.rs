@@ -21,9 +21,24 @@ const MODULES: &[(&str, &str, &str)] = &[
     ("print", "Print", "dialog.print"),
 ];
 
-/// Which module is lit: the slideshow while it runs, Develop in the detail view, else Library.
+/// The Import module's entry in the picker, there (and lit) while a camera's photos fill the window.
+const IMPORT_MODULE: (&str, &str, &str) = ("import", "Import", "import.cameraClose");
+
+/// The picker's modules right now: the fixed four, and Import while the Import module is open.
+fn modules(app: &LightcraftApp) -> Vec<(&'static str, &'static str, &'static str)> {
+    let mut v = MODULES.to_vec();
+    if crate::camera_module::is_open(app) {
+        v.push(IMPORT_MODULE);
+    }
+    v
+}
+
+/// Which module is lit: Import while the Import module is open, the slideshow while it runs,
+/// Develop in the detail view, else Library.
 fn active_module(app: &LightcraftApp) -> &'static str {
-    if app.ui.slideshow.is_some() {
+    if crate::camera_module::is_open(app) {
+        "import"
+    } else if app.ui.slideshow.is_some() {
         "slideshow"
     } else if app.ui.view == ViewMode::Detail {
         "develop"
@@ -73,7 +88,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
             let x = appearance_button(app, ui, &t, full, x);
             let x = filter_button(app, ui, &t, full, x);
             // the picker ends 20 points before the icons; what is left of it goes to the menus
-            let modules_w = module_picker_width(ui, &t);
+            let modules_w = module_picker_width(app, ui, &t);
             let modules_right = x - 14.0 - 20.0;
             let modules_left = modules_right - modules_w;
             nav_buttons(app, ui, modules_left);
@@ -131,12 +146,13 @@ fn identity_plate(ui: &mut egui::Ui, t: &Tokens, limit: f32) {
 }
 
 /// The width the module picker takes: its labels, the gaps and the dividers between them.
-fn module_picker_width(ui: &egui::Ui, t: &Tokens) -> f32 {
+fn module_picker_width(app: &LightcraftApp, ui: &egui::Ui, t: &Tokens) -> f32 {
     let mut w = 0.0;
-    for (i, (_, label, _)) in MODULES.iter().enumerate() {
+    let modules = modules(app);
+    for (i, (_, label, _)) in modules.iter().enumerate() {
         let g = ui.painter().layout_no_wrap(crate::i18n::tr(label).into(), t.semibold(13.0), t.text);
         w += g.size().x + 20.0;
-        if i + 1 < MODULES.len() {
+        if i + 1 < modules.len() {
             w += 9.0;
         }
     }
@@ -151,7 +167,8 @@ fn module_picker(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: R
     let active = active_module(app);
     let mut x = row.left();
     let mut run = None;
-    for (i, (id, label, cmd)) in MODULES.iter().enumerate() {
+    let modules = modules(app);
+    for (i, (id, label, cmd)) in modules.iter().enumerate() {
         let text = crate::i18n::tr(label);
         // laid out in the placeholder colour, so the colour given when it is painted is the one shown
         let g = ui.painter().layout_no_wrap(text.into(), t.semibold(13.0), egui::Color32::PLACEHOLDER);
@@ -175,13 +192,17 @@ fn module_picker(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: R
             run = Some((*id, *cmd));
         }
         x = r.right();
-        if i + 1 < MODULES.len() {
+        if i + 1 < modules.len() {
             let div = Rect::from_center_size(pos2(x + 4.5, row.center().y), vec2(1.0, 12.0));
             ui.painter().rect_filled(div, 0.0, t.text_disabled);
             x += 9.0;
         }
     }
     if let Some((id, cmd)) = run {
+        // leaving for another module closes the Import module (its copy goes on in the activity stack)
+        if id != "import" && crate::camera_module::is_open(app) {
+            crate::camera_module::close(app);
+        }
         if let Err(e) = app.run(cmd, json!({})) {
             app.toast_error(ui.ctx(), e);
         } else if id == "develop" && !app.ui.right.is_edit_tool() {
@@ -271,16 +292,58 @@ fn right_icons(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rec
             ui.painter().text(c, Align2::CENTER_CENTER, "!", t.semibold(9.0), t.canvas);
             register(ui, "indicator:unsaved", r);
         }
-        // a refusal says why (Import while a Lightroom catalog is coming in)
-        if resp.clicked()
+        if id == "import" {
+            // "+" opens the import menu: photos, a folder, and the cameras and cards plugged in
+            egui::Popup::menu(&resp).show(|ui| import_menu(app, ui));
+        } else if resp.clicked()
             && !cmd.is_empty()
             && let Err(e) = app.run(cmd, json!({}))
         {
+            // a refusal says why (Import while a Lightroom catalog is coming in)
             app.toast_error(ui.ctx(), e);
         }
         x -= 34.0;
     }
     x
+}
+
+/// The "+" button's menu: Import Photos…, Import from Folder…, then one entry per camera or card
+/// found (a camera over USB opens the Import module; a card the import review), or a disabled
+/// "No Camera or Card Found".
+fn import_menu(app: &mut LightcraftApp, ui: &mut egui::Ui) {
+    ui.set_min_width(220.0);
+    for (wid, cmd, label) in [("importPhotos", "file.addPhotos", "Import Photos…"), ("importFolder", "file.addFolder", "Import from Folder…")] {
+        let enabled = crate::menus::ui_enabled(app, cmd);
+        let r = ui.add_enabled(enabled, egui::Button::new(crate::i18n::tr(label)));
+        register(ui, format!("menu:{wid}"), r.rect);
+        if r.clicked() {
+            if let Err(e) = app.run(cmd, json!({})) {
+                app.toast_error(ui.ctx(), e);
+            }
+            ui.close();
+        }
+    }
+    ui.separator();
+    let devices = lightcraft_engine::devices::devices();
+    if devices.is_empty() {
+        let r = ui.add_enabled(false, egui::Button::new(crate::i18n::tr("No Camera or Card Found")));
+        register(ui, "menu:importDevice-none", r.rect);
+        return;
+    }
+    for (i, d) in devices.iter().enumerate() {
+        let r = ui.button(format!("{}…", d.name));
+        register(ui, format!("menu:importDevice-{i}"), r.rect);
+        if r.clicked() {
+            let result = match &d.camera {
+                Some(camera) => app.run("import.camera", json!({"camera": camera})),
+                None => app.run("file.addFromDevice", json!({"path": d.path})),
+            };
+            if let Err(e) = result {
+                app.toast_error(ui.ctx(), e);
+            }
+            ui.close();
+        }
+    }
 }
 
 /// The appearance icon at `x`, with its theme-favourites menu; returns the x of the next control.
