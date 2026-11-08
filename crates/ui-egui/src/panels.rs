@@ -102,7 +102,7 @@ pub fn toast(app: &mut LightcraftApp, ctx: &egui::Context) {
     let wrap = (canvas.width() - 80.0).clamp(200.0, 720.0);
     let (background, foreground) = label.map(crate::theme::label_toast_colors).unwrap_or((egui::Color32::from_black_alpha(200), t.text));
     let foreground = foreground.gamma_multiply(fade);
-    let galley = painter.layout(text, t.font(14.0), foreground, wrap);
+    let galley = painter.layout(text, t.font(13.0), foreground, wrap);
     let size = vec2(galley.size().x + 40.0, (galley.size().y + 22.0).max(40.0));
     // a slideshow's playback controls sit at the bottom: the toast goes to the top there, clear of them
     let y = if app.ui.slideshow.is_some() { canvas.top() + 60.0 } else { canvas.bottom() - 60.0 };
@@ -116,8 +116,8 @@ pub fn toast(app: &mut LightcraftApp, ctx: &egui::Context) {
 pub fn empty_message(ui: &egui::Ui, rect: Rect, title: &str, body: &str) {
     let t = Tokens::get(ui.ctx());
     let p = ui.painter();
-    p.text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, crate::i18n::tr(title), t.semibold(18.0), t.text_label);
-    p.text(rect.center() + vec2(0.0, 14.0), Align2::CENTER_CENTER, crate::i18n::tr(body), t.font(13.0), t.text_dim);
+    p.text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, crate::i18n::tr(title), t.semibold(17.0), t.text_label);
+    p.text(rect.center() + vec2(0.0, 14.0), Align2::CENTER_CENTER, crate::i18n::tr(body), t.font(12.0), t.text_dim);
 }
 
 /// A button under an empty state's message: the command it runs, its label, and the id it is
@@ -139,14 +139,14 @@ pub fn empty_state(ui: &mut egui::Ui, rect: Rect, title: &str, body: &str, actio
         job.halign = egui::Align::Center;
         ui.painter().layout_job(job)
     };
-    let title = centred(ui, crate::i18n::tr(title), t.semibold(18.0), t.text_label);
-    let body = centred(ui, crate::i18n::tr(body), t.font(13.0), t.text_dim);
-    let hint = hint.map(|h| centred(ui, h, t.font(12.0), t.text_dim));
+    let title = centred(ui, crate::i18n::tr(title), t.semibold(17.0), t.text_label);
+    let body = centred(ui, crate::i18n::tr(body), t.font(12.0), t.text_dim);
+    let hint = hint.map(|h| centred(ui, h, t.font(11.0), t.text_dim));
     // the buttons' widths, and whether they fit side by side (else one above the other)
     const BUTTON_H: f32 = 30.0;
     const GAP: f32 = 8.0;
     let widths: Vec<f32> =
-        actions.iter().map(|a| ui.painter().layout_no_wrap(crate::i18n::tr(a.label).to_string(), t.semibold(13.0), t.text).size().x + 32.0).collect();
+        actions.iter().map(|a| ui.painter().layout_no_wrap(crate::i18n::tr(a.label).to_string(), t.semibold(12.0), t.text).size().x + 32.0).collect();
     let row_w = widths.iter().sum::<f32>() + GAP * widths.len().saturating_sub(1) as f32;
     let side_by_side = row_w <= wrap;
     let buttons_h = match (actions.len(), side_by_side) {
@@ -174,7 +174,7 @@ pub fn empty_state(ui: &mut egui::Ui, rect: Rect, title: &str, body: &str, actio
             let w = widths.iter().copied().fold(0.0, f32::max).min(wrap);
             Rect::from_min_size(pos2(rect.center().x - w / 2.0, buttons_top + i as f32 * (BUTTON_H + GAP)), vec2(w, BUTTON_H))
         };
-        let label = egui::RichText::new(crate::i18n::tr(a.label)).font(t.semibold(13.0));
+        let label = egui::RichText::new(crate::i18n::tr(a.label)).font(t.semibold(12.0));
         let button =
             if i == 0 { egui::Button::new(label.color(egui::Color32::WHITE)).fill(t.accent) } else { egui::Button::new(label.color(t.text)) };
         let resp = ui.put(r, button);

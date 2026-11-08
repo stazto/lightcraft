@@ -468,6 +468,7 @@ fn navigation_open_library_and_hdr_keys_wait_for_a_text_field() {
     select(&mut h, middle);
 
     // with the search box focused, none does
+    h.request("ui.set", json!({"filterBar": true}), T);
     let r = h.request("ui.clickWidget", json!({"id": "field:search"}), T);
     assert_eq!(r["ok"], true, "{r}");
     h.step();

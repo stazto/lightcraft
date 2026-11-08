@@ -308,13 +308,13 @@ fn show_inner(app: &mut LightcraftApp, ui: &mut egui::Ui) {
             let (hr, _) = ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::hover());
             ui.painter().rect_filled(hr, 0.0, t.canvas);
             let full = crate::i18n::source_title(&app.session);
-            let count_w = ui.painter().layout_no_wrap(cnt.clone(), t.font(12.5), t.text_dim).size().x;
+            let count_w = ui.painter().layout_no_wrap(cnt.clone(), t.font(11.5), t.text_dim).size().x;
             // the title gives way to the count: a long album or folder name is trimmed, in full on hover
             let room = (hr.width() - 20.0 - count_w - 36.0).max(0.0);
             let font = t.semibold(17.0);
             let title = crate::widgets::elide_head(&full, room, |s| ui.painter().layout_no_wrap(s.to_string(), font.clone(), t.text).size().x);
             let title_rect = ui.painter().text(pos2(hr.left() + 20.0, hr.center().y), Align2::LEFT_CENTER, &title, font, t.text);
-            let count_rect = ui.painter().text(pos2(hr.right() - 20.0, hr.center().y), Align2::RIGHT_CENTER, cnt, t.font(12.5), t.text_dim);
+            let count_rect = ui.painter().text(pos2(hr.right() - 20.0, hr.center().y), Align2::RIGHT_CENTER, cnt, t.font(11.5), t.text_dim);
             crate::widgets::register(ui, "grid:title", title_rect);
             crate::widgets::register(ui, "grid:count", count_rect);
             if title != full {
@@ -665,16 +665,21 @@ pub fn layout(aspects: &[f32], groups: &[(usize, usize)], avail_w: f32, target: 
 /// [`Tokens::ring_active`] with a 1 pt line in [`Tokens::ring_inner`] over its inner edge, against
 /// the photo (so the ring reads on a white photo and on a black one). The others are a single 1.5 pt line in
 /// [`Tokens::ring_selected`]; the two are told apart by weight, not by lightness alone.
+/// Corner radius of a thumbnail (and of the ring round it).
+pub(crate) const THUMB_RADIUS: f32 = 6.0;
+/// Corner radius of a square-grid cell.
+pub(crate) const CELL_RADIUS: f32 = 8.0;
+
 pub(crate) fn selection_ring(p: &egui::Painter, t: &Tokens, photo: Rect, state: lightcraft_engine::SelectionState) {
     use lightcraft_engine::SelectionState;
     match state {
         SelectionState::Active => {
             // both on the same rect, so no seam opens between them at a fractional scale
-            p.rect_stroke(photo, 0.0, Stroke::new(3.0, t.ring_active), StrokeKind::Outside);
-            p.rect_stroke(photo, 0.0, Stroke::new(1.0, t.ring_inner), StrokeKind::Outside);
+            p.rect_stroke(photo, THUMB_RADIUS, Stroke::new(3.0, t.ring_active), StrokeKind::Outside);
+            p.rect_stroke(photo, THUMB_RADIUS, Stroke::new(1.0, t.ring_inner), StrokeKind::Outside);
         }
         SelectionState::Selected => {
-            p.rect_stroke(photo, 0.0, Stroke::new(1.5, t.ring_selected), StrokeKind::Outside);
+            p.rect_stroke(photo, THUMB_RADIUS, Stroke::new(1.5, t.ring_selected), StrokeKind::Outside);
         }
         SelectionState::NotSelected => {}
     }
@@ -698,11 +703,11 @@ fn group_header(app: &mut LightcraftApp, ui: &mut egui::Ui, run: &DateRun, ids: 
         p.rect_filled(r, 0.0, t.canvas);
         p.hline(r.x_range(), r.bottom(), Stroke::new(1.0, t.divider));
     }
-    let g = p.layout_no_wrap(label, t.semibold(15.0), if resp.hovered() { t.text } else { t.text_label });
+    let g = p.layout_no_wrap(label, t.semibold(14.0), if resp.hovered() { t.text } else { t.text_label });
     let x = r.left() + 8.0;
     let gw = g.size().x;
     p.galley(pos2(x, r.center().y - g.size().y / 2.0), g, t.text);
-    p.text(pos2(x + gw + 10.0, r.center().y), Align2::LEFT_CENTER, count, t.font(12.5), t.text_dim);
+    p.text(pos2(x + gw + 10.0, r.center().y), Align2::LEFT_CENTER, count, t.font(11.5), t.text_dim);
     if resp.clicked() {
         let group: Vec<u64> = ids[run.start..(run.start + run.count).min(ids.len())].iter().map(|p| p.0).collect();
         let m = ui.input(|i| i.modifiers);
@@ -801,7 +806,7 @@ fn cell(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId, r: Rect, square
     let p = ui.painter();
     let img_rect = if square {
         let base = if selected { t.cell_selected } else { t.cell };
-        p.rect_filled(r, 0.0, crate::theme::label_background(base, photo.label, selected));
+        p.rect_filled(r, CELL_RADIUS, crate::theme::label_background(base, photo.label, selected));
         Rect::from_min_max(r.min + vec2(10.0, 24.0), r.max - vec2(10.0, 10.0))
     } else {
         r
@@ -817,7 +822,7 @@ fn cell(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId, r: Rect, square
         paint_preview_pill(ui, p, &t, id, why, photo_rect);
     }
     if photo.flag == Flag::Reject {
-        p.rect_filled(img_rect, 0.0, Color32::from_black_alpha(110));
+        p.rect_filled(img_rect, THUMB_RADIUS, Color32::from_black_alpha(110));
     }
     cell_interaction(app, ui, &resp, id, &photo);
 }
@@ -846,17 +851,21 @@ fn paint_cell_thumbnail(app: &mut LightcraftApp, p: &egui::Painter, t: &Tokens, 
         let [tw, th] = tex.size;
         // Preserve the decoded preview's ratio when it differs from the catalog dimensions.
         let fit = super::detail::fit_texture_rect(img_rect, [tw, th]);
-        p.image(tex.tex.id(), fit, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+        // the thumbnail with the rounded corners the rest of the chrome has
+        p.add(
+            egui::epaint::RectShape::filled(fit, THUMB_RADIUS, Color32::WHITE)
+                .with_texture(tex.tex.id(), Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0))),
+        );
         selection_ring(p, t, fit, state);
         fit
     } else {
         let ph = img_rect.shrink(if square { 20.0 } else { 0.0 });
-        p.rect_filled(ph, 0.0, t.skeleton);
+        p.rect_filled(ph, THUMB_RADIUS, t.skeleton);
         // not drawn yet (or unreadable): the selection is still visible
         selection_ring(p, t, ph, state);
         if app.renderer.failure(Slot::Thumb(id)).is_some() {
             // unreadable / missing file
-            p.text(ph.center(), Align2::CENTER_CENTER, "!", t.semibold(18.0), t.text);
+            p.text(ph.center(), Align2::CENTER_CENTER, "!", t.semibold(17.0), t.text);
         }
         ph
     }
@@ -1027,7 +1036,7 @@ fn folder_header(app: &mut LightcraftApp, ui: &mut egui::Ui, b: &lightcraft_engi
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 8.0;
             let count_w =
-                ui.painter().layout_no_wrap(cnt.to_owned(), t.font(12.5), t.text_dim).size().x.ceil().min((ui.available_width() * 0.45).floor());
+                ui.painter().layout_no_wrap(cnt.to_owned(), t.font(11.5), t.text_dim).size().x.ceil().min((ui.available_width() * 0.45).floor());
             let path_w = (ui.available_width() - count_w - 8.0).max(0.0).floor();
             ui.allocate_ui_with_layout(vec2(path_w, 24.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 folder_breadcrumbs(app, ui, &b.path);
@@ -1049,7 +1058,7 @@ fn folder_header(app: &mut LightcraftApp, ui: &mut egui::Ui, b: &lightcraft_engi
             if local_n > 0 {
                 let label = crate::i18n::tr_format!("Add {local_n} to My Photos", local_n = local_n);
                 let button =
-                    ui.add(egui::Button::new(egui::RichText::new(label).font(t.semibold(11.5)).color(t.text)).wrap().min_size(vec2(37.0, 24.0)));
+                    ui.add(egui::Button::new(egui::RichText::new(label).font(t.semibold(11.0)).color(t.text)).wrap().min_size(vec2(37.0, 24.0)));
                 register(ui, "button:addToLibrary", button.rect);
                 if button.clicked() {
                     let local: Vec<u64> = ids.iter().filter(|id| app.session.catalog.photo(**id).is_some_and(|p| p.local)).map(|id| id.0).collect();
@@ -1166,7 +1175,7 @@ pub fn drag_feedback(app: &mut LightcraftApp, ctx: &egui::Context) {
         ctx,
         |ui| {
             egui::Frame::NONE.fill(t.accent).corner_radius(10.0).inner_margin(egui::Margin::symmetric(9, 3)).show(ui, |ui| {
-                let label = ui.add(egui::Label::new(egui::RichText::new(text).color(Color32::WHITE).font(t.semibold(12.0))).extend());
+                let label = ui.add(egui::Label::new(egui::RichText::new(text).color(Color32::WHITE).font(t.semibold(11.0))).extend());
                 crate::widgets::register(ui, "dragPhotos", label.rect);
             });
         },
@@ -1255,7 +1264,7 @@ pub fn stack_badge(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId, sid:
     let collapsed = st.collapsed;
     let text = if collapsed { n.to_string() } else { format!("{}/{n}", pos + 1) };
     let p = ui.painter();
-    let g = p.layout_no_wrap(text, t.semibold(11.0), Color32::WHITE);
+    let g = p.layout_no_wrap(text, t.semibold(10.5), Color32::WHITE);
     let origin = if square { r.min + vec2(10.0, 26.0) } else { r.min + vec2(5.0, 5.0) };
     let br = Rect::from_min_size(origin, vec2(g.size().x + 30.0, 20.0));
     let resp = ui.interact(br, egui::Id::unique(("stack-badge", id.0)), Sense::click()).on_hover_text(if collapsed {

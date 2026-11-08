@@ -1,6 +1,6 @@
 use super::{
     LightcraftApp, docking, drop_overlay, export_task, focus_scan, import, lightroom_import, merge, model_setup, monotonic_ms, panels, pick, recheck,
-    shortcuts, slideshow_export, state, sync, tasks, theme, updates_ui, widgets,
+    shortcuts, slideshow_export, state, sync, tasks, theme, widgets,
 };
 
 impl LightcraftApp {
@@ -70,7 +70,6 @@ impl LightcraftApp {
         lightroom_import::tick(self, ctx);
         recheck::tick(self);
         tasks::poll(self, ctx);
-        updates_ui::tick(self, ctx);
         self.preview_build_status(ctx);
         self.save_status(ctx);
         self.ai_mask_detail(ctx, now);
@@ -164,7 +163,7 @@ impl LightcraftApp {
                 self.toast_for(
                     ctx,
                     crate::i18n::tr_format!(
-                        "The XMP sidecars of {n} photos couldn't be written (is their folder offline?). LightCraft keeps trying.",
+                        "The XMP sidecars of {n} photos couldn't be written (is their folder offline?). Lightspot keeps trying.",
                         n = waiting
                     ),
                     8.0,
@@ -268,7 +267,7 @@ impl LightcraftApp {
         // Recent-library checks and launch-list keys read focus/time/keys: they belong to the UI
         // phase, not the hidden-capable `logic` tick (plan §4.5 / migration input contract).
         panels::library_problem::logic(self, ctx);
-        if self.fonts_ready && !updates_ui::blocks_input(self) {
+        if self.fonts_ready {
             shortcuts::handle(self, ctx);
         }
     }
@@ -318,22 +317,22 @@ impl LightcraftApp {
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.window_title()));
     }
 
-    /// "LightCraft — <library name>" (just "LightCraft" for a library that isn't saved).
+    /// "Lightspot — <library name>" (just "Lightspot" for a library that isn't saved).
     pub fn window_title(&self) -> String {
         match panels::settings::open_library_name(self) {
-            Some(name) => format!("LightCraft — {name}"),
-            None => "LightCraft".to_string(),
+            Some(name) => format!("Lightspot — {name}"),
+            None => "Lightspot".to_string(),
         }
     }
 
-    /// The browser page's title: "<file name>[ •] — LightCraft" for the active photo (• while
+    /// The browser page's title: "<file name>[ •] — Lightspot" for the active photo (• while
     /// `unsaved`: changes not yet written to storage), else the window title. The web build has no
     /// window for `ViewportCommand::Title`; a host embedding it reads this title to tell which
     /// document a drop opened and whether it is saved (issue #2397).
     pub fn page_title(&self, unsaved: bool) -> String {
         let dot = if unsaved { " •" } else { "" };
         match self.session.active().and_then(|id| self.session.catalog.photo(id)) {
-            Some(p) => format!("{}{dot} — LightCraft", p.file_name),
+            Some(p) => format!("{}{dot} — Lightspot", p.file_name),
             None => format!("{}{dot}", self.window_title()),
         }
     }
@@ -427,7 +426,6 @@ impl LightcraftApp {
                 panels::notices::hide_background_pointer(&ctx);
             }
             panels::dialogs::show(self, &ctx, notice_blocks);
-            updates_ui::show(self, &ctx);
             panels::library_problem::show(self, &ctx, notice_blocks);
             panels::toast(self, &ctx);
             drop_overlay::show(self, &ctx);
@@ -458,7 +456,6 @@ impl LightcraftApp {
             panels::notices::hide_background_pointer(&ctx);
         }
         panels::dialogs::show(self, &ctx, notice_blocks);
-        updates_ui::show(self, &ctx);
         panels::library_problem::show(self, &ctx, notice_blocks);
         export_task::poll(self, &ctx);
         slideshow_export::poll(self, &ctx);

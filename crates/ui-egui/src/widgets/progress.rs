@@ -143,7 +143,7 @@ impl Progress {
         }
         if let Some(l) = label {
             // the text reads on the track in the theme's colour, and in white where the fill is
-            let font = t.font(11.5);
+            let font = t.font(11.0);
             let on_track = p.layout_no_wrap(l.to_string(), font.clone(), t.text);
             let on_fill = p.layout_no_wrap(l.to_string(), font, Color32::WHITE);
             let at = pos2(rect.center().x - on_track.size().x / 2.0, rect.center().y - on_track.size().y / 2.0);

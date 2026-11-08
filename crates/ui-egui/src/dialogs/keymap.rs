@@ -177,7 +177,7 @@ fn fixed_keys(app: &LightcraftApp, ui: &mut egui::Ui, t: &Tokens, mac: bool, nee
         return;
     }
     ui.add_space(8.0);
-    ui.label(RichText::new(crate::i18n::tr("Fixed keys")).font(t.semibold(12.5)).color(t.text));
+    ui.label(RichText::new(crate::i18n::tr("Fixed keys")).font(t.semibold(11.5)).color(t.text));
     // keys saved for commands this build knows: an entry for an unknown command takes no key
     let taken: Vec<_> = shortcuts::saved_keys(&app.ui.settings.keymap).map(|(_, k)| k).collect();
     egui::Grid::new("shortcuts-fixed").striped(true).num_columns(2).spacing([12.0, 4.0]).show(ui, |ui| {

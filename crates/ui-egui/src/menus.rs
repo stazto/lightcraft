@@ -46,7 +46,7 @@ pub fn ui_enabled(app: &LightcraftApp, id: &str) -> bool {
         "app.exportPrevious" => app.session.active().is_some() && app.session.last_export.is_some(),
         "dialog.pasteSettings" => app.session.active().is_some() && app.session.clipboard.is_some(),
         "photo.openOriginalInExternal" => {
-            // only a file type LightCraft reads can be handed over (#2135); the extension alone
+            // only a file type Lightspot reads can be handed over (#2135); the extension alone
             // decides, so no disk or share is touched while a menu is drawn
             app.services.open_with.is_some()
                 && app.session.active().and_then(|id| app.session.catalog.photo(id)).is_some_and(|p| match &p.source {

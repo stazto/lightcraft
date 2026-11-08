@@ -30,9 +30,9 @@
     <string>zh-Hant</string>
   </array>
   <key>CFBundleDisplayName</key>
-  <string>LightCraft</string>
+  <string>Lightspot</string>
   <key>CFBundleName</key>
-  <string>LightCraft</string>
+  <string>Lightspot</string>
   <key>CFBundleExecutable</key>
   <string>LightCraft</string>
   <key>CFBundleIdentifier</key>

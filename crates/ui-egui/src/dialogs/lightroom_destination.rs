@@ -292,7 +292,7 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, dialog: &mut Dialog) {
                 *location = d;
             }
         });
-        note(ui, tr("LightCraft opens the new library, then imports the catalog into it. Its folder must be new or empty."));
+        note(ui, tr("Lightspot opens the new library, then imports the catalog into it. Its folder must be new or empty."));
     });
     ui.add_space(4.0);
     // (it only speaks of merging: unticked and greyed out while a new library is chosen)

@@ -31,7 +31,7 @@ const REGION_HANDLES: [(f32, f32, egui::CursorIcon); 8] = [
 /// Face/pet/focus regions read from XMP (MWG-RS), drawn as boxes over the photo. Hovering a box shows
 /// a × in its corner and eight resize handles. A drag previews the new box live and is reported once,
 /// on release (one undo step); the × reports the region to remove. Both are catalog-only edits:
-/// LightCraft doesn't write regions to XMP. Regions are stored on the upright (EXIF-oriented) photo;
+/// Lightspot doesn't write regions to XMP. Regions are stored on the upright (EXIF-oriented) photo;
 /// `orient` is the user's Rotate / Flip on top of it, which the loupe's normalized frame includes.
 /// What the face/pet/focus regions of a photo are drawn from.
 pub(super) struct RegionContext<'a> {
@@ -141,7 +141,7 @@ pub(super) fn region_overlay(
         };
         // the name in a dark label with a caret, centred above the box (below it when there is no room)
         let name = &text;
-        let g = p.layout_no_wrap(name.clone(), t.font(13.0), text_color);
+        let g = p.layout_no_wrap(name.clone(), t.font(12.0), text_color);
         let (pad, caret) = (vec2(14.0, 7.0), 5.0);
         let size = g.size() + pad * 2.0;
         let above = rect.top() - caret - size.y >= clip.top();

@@ -196,7 +196,7 @@ pub fn preview(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, max_h: f3
         if !tpl.description.is_empty() {
             said = format!("{said}\n{}", tpl.description);
         }
-        let galley = ui.painter().layout(said, t.font(11.0), Color32::WHITE, (room.width() - 8.0).max(1.0));
+        let galley = ui.painter().layout(said, t.font(10.5), Color32::WHITE, (room.width() - 8.0).max(1.0));
         let band = Rect::from_min_size(
             pos2(room.left(), (room.bottom() - galley.size().y - 6.0).max(room.top())),
             vec2(room.width(), galley.size().y + 6.0),
@@ -214,7 +214,7 @@ pub fn preview(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, max_h: f3
     }
     let Some(id) = app.session.active() else {
         p.rect_filled(rect, 0.0, Color32::from_rgb(s.backdrop_color[0], s.backdrop_color[1], s.backdrop_color[2]));
-        p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Select a photo to preview its slide"), t.font(11.5), Color32::from_gray(200));
+        p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Select a photo to preview its slide"), t.font(11.0), Color32::from_gray(200));
         return;
     };
     let ppp = ui.ctx().pixels_per_point();
@@ -251,7 +251,7 @@ pub fn preview(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, max_h: f3
         |ui: &mut egui::Ui| hint(ui, t, "The selected photo as a slide. Playback fills the screen; the aspect preview only changes this preview.");
     let Some(tex) = app.renderer.textures.get(&Slot::SlidePreview).filter(|tex| tex.photo == id) else {
         p.rect_filled(rect, 0.0, Color32::from_rgb(s.backdrop_color[0], s.backdrop_color[1], s.backdrop_color[2]));
-        p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Rendering…"), t.font(11.5), Color32::from_gray(200));
+        p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Rendering…"), t.font(11.0), Color32::from_gray(200));
         // (the hint too: the render lands on a frame nobody can name, and a line that came with it would push
         // the pinned preview's block, and the page under it, down while a control is being clicked)
         say(ui);
@@ -307,7 +307,7 @@ fn title_preview(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, rect: R
         None => {
             let c = look.titles.screen(title).color;
             p.rect_filled(rect, 0.0, Color32::from_rgb(c[0], c[1], c[2]));
-            p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Rendering…"), t.font(11.5), Color32::from_gray(200));
+            p.text(rect.center(), Align2::CENTER_CENTER, crate::i18n::tr("Rendering…"), t.font(11.0), Color32::from_gray(200));
         }
     }
     let hint_text = match (title, look.titles.screen(title).enabled) {

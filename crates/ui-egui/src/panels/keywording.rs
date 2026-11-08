@@ -80,7 +80,7 @@ fn chip_size(ui: &egui::Ui, name: &str, partial: bool, cross: bool, row_w: f32) 
 fn chip(ui: &mut egui::Ui, path: &str, name: &str, partial: bool, cross: bool, row_w: f32) -> (egui::Response, Option<egui::Response>) {
     use egui::{Align2, CornerRadius, Rect, Sense, Stroke, StrokeKind, pos2, vec2};
     let t = Tokens::get(ui.ctx());
-    let font = t.font(13.0);
+    let font = t.font(12.0);
     let color = if partial { t.text_dim } else { t.text_label };
     let cross_w = if cross { CROSS_W } else { 0.0 };
     let (shown, w) = chip_size(ui, name, partial, cross, row_w);
@@ -263,7 +263,7 @@ fn chip_groups(app: &mut LightcraftApp, ui: &mut egui::Ui, groups: &[Group], sel
             (!g.parent.is_empty(), widths)
         })
         .collect();
-    let small = t.font(11.5);
+    let small = t.font(11.0);
     for (i, line) in lines(&sizes, avail, GAP, all).into_iter().enumerate() {
         match line {
             Line::Heading(g) => {
@@ -452,12 +452,12 @@ pub(crate) fn offers_below(ui: &egui::Ui, below: egui::Rect, offers: &Offers, at
                 if lit || resp.hovered() {
                     ui.painter().rect_filled(r, 4.0, if lit { t.pressed } else { t.hover });
                 }
-                let font = t.font(13.0);
+                let font = t.font(12.0);
                 let measure = |s: &str, f: &egui::FontId| ui.painter().layout_no_wrap(s.to_string(), f.clone(), t.text).size().x;
                 let name = chip_label(name, false, width - 16.0, |s| measure(s, &font));
                 let end = r.left() + 8.0 + measure(&name, &font);
                 ui.painter().text(pos2(r.left() + 8.0, r.center().y), Align2::LEFT_CENTER, &name, font, t.text);
-                let small = t.font(11.5);
+                let small = t.font(11.0);
                 let room = r.right() - 8.0 - (end + 10.0);
                 if !place.is_empty() && room >= 30.0 {
                     let place = chip_label(place, false, room, |s| measure(s, &small));
@@ -498,7 +498,7 @@ pub(crate) fn offers_below(ui: &egui::Ui, below: egui::Rect, offers: &Offers, at
                 };
                 // (its place is said in words: not a path to cut from the front)
                 let r = line(ui, egui::Id::unique("keyword-offer-create"), name, "", &said, false);
-                let small = t.font(11.5);
+                let small = t.font(11.0);
                 ui.painter().text(pos2(r.rect.right() - 8.0, r.rect.center().y), Align2::RIGHT_CENTER, place, small, t.text_label);
                 register(ui, "kwCompleteCreate", r.rect);
                 // (Return gives the highlighted offer instead, while there is one)

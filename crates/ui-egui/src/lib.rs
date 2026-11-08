@@ -1,19 +1,10 @@
-//! LightCraft's egui frontend: a Lightroom-style UI over `lightcraft-engine`.
+//! Lightspot's egui frontend: a Lightroom-style UI over `lightcraft-engine`.
 //!
 //! The UI is thin: every action goes through [`LightcraftApp::run`], which handles UI commands
 //! (views, panels, zoom — see [`menus::ui_commands`]) and forwards everything else to the engine.
 //! The same entry point serves menus, shortcuts, buttons and the control channel ([`control`]).
 #![forbid(unsafe_code)]
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
-
-/// LightCraft as craft-update knows it, with its 128 px icon and accent colour: the update
-/// prompt shows both, and an AppImage's menu entry gets the icon.
-#[cfg(not(target_arch = "wasm32"))]
-pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
-    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.lightcraft.png")),
-    accent: Some([0xf2, 0xa5, 0x16]),
-    ..craft_update::suite::LIGHTCRAFT
-};
 
 pub mod brush_live;
 pub mod canvas_keys;
@@ -73,7 +64,6 @@ pub use dialogs::lightroom_destination;
 pub use dialogs::merge;
 pub use dialogs::print_view;
 pub use dialogs::slideshow_export;
-pub use dialogs::updates_ui;
 pub use menus::menu_level;
 pub use menus::menubar;
 pub use state::UiState;
@@ -171,7 +161,6 @@ pub struct LightcraftApp {
     pub headless_host: bool,
     /// Warnings to show one at a time (damaged settings files…, issue #103).
     pub notices: Vec<String>,
-    pub(crate) updates_rt: updates_ui::Runtime,
     /// Quitting was stopped to ask first: changes couldn't be saved, or tasks are running.
     pub quit_prompt: Option<QuitPrompt>,
     /// Keyboard/focus/input state for the prompt above, including its one-frame creation barrier.

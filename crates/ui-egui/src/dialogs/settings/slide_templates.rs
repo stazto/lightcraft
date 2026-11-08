@@ -141,7 +141,7 @@ fn template_row(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, tpl: &Te
         p.rect_stroke(rect.shrink(0.5), 3.0, Stroke::new(1.0, t.accent), egui::StrokeKind::Inside);
     }
     let colour = if current { t.text } else { t.text_label };
-    p.text(rect.left_center() + vec2(8.0, 0.0), egui::Align2::LEFT_CENTER, &name, t.font(12.0), colour);
+    p.text(rect.left_center() + vec2(8.0, 0.0), egui::Align2::LEFT_CENTER, &name, t.font(11.0), colour);
     if resp.clicked() {
         apply(app, &ctx, &tpl.id, &name);
     }

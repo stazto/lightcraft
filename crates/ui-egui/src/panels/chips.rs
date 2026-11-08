@@ -109,7 +109,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui, chips: &[FilterChip]) {
     let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), HEIGHT), Sense::hover());
     ui.painter().rect_filled(bar, 0.0, t.canvas);
     register(ui, "filterchips", bar);
-    let font = t.font(12.0);
+    let font = t.font(11.0);
     let right = bar.right() - 16.0;
     let mut x = bar.left() + 20.0;
     let mut shown = 0;

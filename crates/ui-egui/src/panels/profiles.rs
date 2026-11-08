@@ -29,14 +29,14 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId) {
     if icon_button(&mut back, "profilesBack", Icon::ChevronLeft, vec2(28.0, 28.0), false, true, "Back to Edit").clicked() {
         app.ui.right = RightPanel::Edit;
     }
-    ui.painter().text(pos2(hr.left() + 46.0, hr.center().y + 2.0), Align2::LEFT_CENTER, crate::i18n::tr("Profiles"), t.semibold(15.0), t.text);
+    ui.painter().text(pos2(hr.left() + 46.0, hr.center().y + 2.0), Align2::LEFT_CENTER, crate::i18n::tr("Profiles"), t.semibold(14.0), t.text);
     divider(ui);
     // the applied profile and its amount
     let (cr, _) = ui.allocate_exact_size(vec2(ui.available_width(), 34.0), Sense::hover());
     let name = app.session.profile_info(&d.profile.id).map(|(name, _)| name).unwrap_or("Color");
-    ui.painter().text(pos2(cr.left() + 24.0, cr.center().y), Align2::LEFT_CENTER, crate::i18n::tr("Profile"), t.font(13.0), t.text_dim);
+    ui.painter().text(pos2(cr.left() + 24.0, cr.center().y), Align2::LEFT_CENTER, crate::i18n::tr("Profile"), t.font(12.0), t.text_dim);
     // a long name is cut short (with …) at the panel's edge
-    let g = one_line(ui.painter(), crate::i18n::profile_label(&d.profile.id, name), t.font(14.0), t.text_label, cr.width() - 84.0 - 24.0);
+    let g = one_line(ui.painter(), crate::i18n::profile_label(&d.profile.id, name), t.font(13.0), t.text_label, cr.width() - 84.0 - 24.0);
     ui.painter().galley(pos2(cr.left() + 84.0, cr.center().y - g.size().y / 2.0), g, t.text_label);
     if d.profile.id != "lc.color" {
         super::edit::control(app, ui, &d, "profile.amount", true);
@@ -87,10 +87,10 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId) {
             pos2(r.left() + 36.0, r.center().y),
             Align2::LEFT_CENTER,
             crate::i18n::builtin_label(title, !imported),
-            t.semibold(13.0),
+            t.semibold(12.0),
             t.text_label,
         );
-        ui.painter().text(pos2(r.right() - 22.0, r.center().y), Align2::RIGHT_CENTER, list.len().to_string(), t.font(12.0), t.text_dim);
+        ui.painter().text(pos2(r.right() - 22.0, r.center().y), Align2::RIGHT_CENTER, list.len().to_string(), t.font(11.0), t.text_dim);
         if resp.clicked() {
             ui.data_mut(|m| m.insert_temp(open_id, !open));
         }
@@ -173,7 +173,7 @@ fn cell_ui(
     }
     let name_color = if applied { t.text } else { t.text_label };
     // cut short (with …) to the cell, so it never runs into its neighbour; the full name on hover
-    let g = one_line(painter, crate::i18n::profile_label(p_id, p_name), t.font(12.0), name_color, cell.width() - 2.0);
+    let g = one_line(painter, crate::i18n::profile_label(p_id, p_name), t.font(11.0), name_color, cell.width() - 2.0);
     painter.galley(pos2(cell.left() + 2.0, thumb.bottom() + 12.0 - g.size().y / 2.0), g, name_color);
     // favourite star (always shown when set, on hover otherwise)
     let fav = app.session.profile_favorites.iter().any(|f| f == p_id);

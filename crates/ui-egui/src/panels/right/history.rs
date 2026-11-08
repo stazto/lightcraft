@@ -9,7 +9,7 @@ pub(super) fn versions(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId) 
             let _ = app.run("version.create", json!({}));
         }
         ui.add_space(8.0);
-        // Named (made by you) and Auto (made by LightCraft) versions
+        // Named (made by you) and Auto (made by Lightspot) versions
         let tab_id = egui::Id::unique("versions-tab");
         let mut auto: bool = ui.data(|d| d.get_temp(tab_id)).unwrap_or(false);
         let named_n = p.versions.iter().filter(|v| !v.auto).count();
@@ -49,11 +49,11 @@ pub(super) fn versions(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId) 
                 pos2(x, r.top() + 18.0),
                 Align2::LEFT_CENTER,
                 &v.name,
-                t.semibold(13.0),
+                t.semibold(12.0),
                 t.text,
             );
             let painter = ui.painter().with_clip_rect(r);
-            painter.text(pos2(x, r.top() + 38.0), Align2::LEFT_CENTER, short_time(&v.created), t.font(11.0), t.text_dim);
+            painter.text(pos2(x, r.top() + 38.0), Align2::LEFT_CENTER, short_time(&v.created), t.font(10.5), t.text_dim);
             if current {
                 paint(ui.painter(), Rect::from_center_size(pos2(r.right() - 14.0, r.center().y), vec2(14.0, 14.0)), Icon::Check, t.accent);
             }
@@ -155,7 +155,7 @@ pub(super) fn activity(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId) 
                 pos2(r.left() + 24.0, r.center().y),
                 Align2::LEFT_CENTER,
                 crate::i18n::history_label(&h.label, &app.session.presets),
-                t.font(12.5),
+                t.font(11.5),
                 text,
             );
             if resp.clicked() {

@@ -61,7 +61,7 @@ pub(super) fn field(ui: &mut egui::Ui, field: crate::text_field::TextField<'_>) 
 
 pub(crate) fn heading(ui: &mut egui::Ui, t: &Tokens, text: &str) {
     ui.add_space(4.0);
-    ui.label(RichText::new(crate::i18n::tr(text)).font(t.semibold(12.5)).color(t.text));
+    ui.label(RichText::new(crate::i18n::tr(text)).font(t.semibold(11.5)).color(t.text));
 }
 
 pub(crate) fn row<R>(ui: &mut egui::Ui, t: &Tokens, label: &str, add: impl FnOnce(&mut egui::Ui) -> R) -> R {

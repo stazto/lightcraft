@@ -95,8 +95,8 @@ pub(crate) fn histogram(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId)
             bar(a + 1.0, z - 1.0, Color32::from_rgb(c[0], c[1], c[2]));
         }
         let y = plot.bottom() + 18.0;
-        p.text(pos2((plot.left() + x0) / 2.0, y), Align2::CENTER_CENTER, crate::i18n::tr("SDR"), t.font(12.5), t.text_label);
-        p.text(pos2((x0 + plot.right()) / 2.0, y), Align2::CENTER_CENTER, crate::i18n::tr("HDR"), t.font(12.5), t.text_label);
+        p.text(pos2((plot.left() + x0) / 2.0, y), Align2::CENTER_CENTER, crate::i18n::tr("SDR"), t.font(11.5), t.text_label);
+        p.text(pos2((x0 + plot.right()) / 2.0, y), Align2::CENTER_CENTER, crate::i18n::tr("HDR"), t.font(11.5), t.text_label);
         let info = Rect::from_center_size(pos2(plot.right() - 16.0, y), vec2(14.0, 14.0));
         paint(p, info, Icon::Info, t.text_label);
         ui.interact(info, egui::Id::unique("hdrHistogramInfo"), Sense::hover()).on_hover_text(crate::i18n::tr(
@@ -206,7 +206,7 @@ pub(crate) fn histogram(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId)
     // the tonal zone the pointer is on replaces the EXIF strip while it is there
     if let Some(text) = zone.as_ref().and_then(|a| a.readout()) {
         register(ui, "histogramReadout", r);
-        p.text(pos2(r.left() + r.width() / 2.0, r.bottom() - 13.0), Align2::CENTER_CENTER, text, t.font(12.5), t.text_label);
+        p.text(pos2(r.left() + r.width() / 2.0, r.bottom() - 13.0), Align2::CENTER_CENTER, text, t.font(11.5), t.text_label);
     } else if let Some(ph) = app.session.catalog.photo(id) {
         let m = &ph.meta;
         let parts: Vec<String> = [
@@ -223,7 +223,7 @@ pub(crate) fn histogram(app: &mut LightcraftApp, ui: &mut egui::Ui, id: PhotoId)
             let text = parts.join(" · ");
             let y = r.bottom() - 13.0;
             let x = r.left() + r.width() / 2.0;
-            p.text(pos2(x, y), Align2::CENTER_CENTER, text, t.font(12.5), t.text_label);
+            p.text(pos2(x, y), Align2::CENTER_CENTER, text, t.font(11.5), t.text_label);
         }
     }
 }

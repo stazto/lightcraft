@@ -19,7 +19,7 @@ fn record(logger: &AppLogger, level: log::Level, target: &str, msg: &str) {
 }
 
 /// The logger this replaced (`StderrLog`): warnings and errors from every target, `info` and
-/// `debug` only from LightCraft's own crates, and only when `LIGHTCRAFT_LOG` asked for them.
+/// `debug` only from Lightspot's own crates, and only when `LIGHTCRAFT_LOG` asked for them.
 fn old_stderr_log_enabled(lightcraft_log: &str, level: log::Level, target: &str) -> bool {
     let max = match lightcraft_log {
         "debug" => LevelFilter::Debug,

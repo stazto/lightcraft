@@ -447,12 +447,12 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, opts: &mut MergeDialog) 
                     rect.center_bottom() - egui::vec2(0.0, 14.0),
                     egui::Align2::CENTER_CENTER,
                     crate::i18n::tr_format!("{stage}… {:.0}%", f * 100.0, stage = stage),
-                    t.font(12.0),
+                    t.font(11.0),
                     t.text,
                 );
             }
             if let Some(e) = &app.merge.error {
-                ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, e, t.font(13.0), t.text);
+                ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, e, t.font(12.0), t.text);
             }
             let info = app.merge.preview.as_ref().map(|p| p.3.clone());
             if let Some(info) = info {

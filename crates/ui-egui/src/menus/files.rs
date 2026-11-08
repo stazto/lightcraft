@@ -144,7 +144,7 @@ fn edit_in_inner(app: &mut LightcraftApp, ctx: &egui::Context, p: &Value, photoc
         if let Some(id) = id {
             app.ui.external_edits.push(*id);
         }
-        // the copy is LightCraft's own render, but it goes through the same gate as any other
+        // the copy is Lightspot's own render, but it goes through the same gate as any other
         // path handed to the system opener (#2135)
         match lightcraft_engine::open_path::openable(path, "") {
             Err(e) => failed = Some(e),
@@ -213,7 +213,7 @@ fn open_originals(app: &mut LightcraftApp, p: &Value) -> Result<Value, String> {
     let mut files = Vec::new();
     let mut skipped = Vec::new();
     for id in ids {
-        // the path may come from an imported catalog: only a photo file LightCraft reads is
+        // the path may come from an imported catalog: only a photo file Lightspot reads is
         // handed to the opener, never a program (#2135)
         match app.session.catalog.photo(id).map(|ph| (ph.file_name.clone(), ph.source.clone())) {
             Some((name, lightcraft_engine::catalog::Source::File { path })) => match lightcraft_engine::open_path::openable(&path, &name) {

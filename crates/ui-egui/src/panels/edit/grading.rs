@@ -140,7 +140,7 @@ fn grading_wheel(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &DevelopSettings
     ui.painter().circle_filled(c, 2.0, Color32::WHITE);
     ui.painter().circle_filled(dot, 5.0, if hidden { Color32::from_gray(150) } else { Color32::WHITE });
     ui.painter().circle_stroke(dot, 5.0, Stroke::new(1.0, Color32::BLACK));
-    ui.painter().text(pos2(c.x, c.y + rad + 12.0), Align2::CENTER_CENTER, crate::i18n::tr(label), t.font(12.0), t.text_label);
+    ui.painter().text(pos2(c.x, c.y + rad + 12.0), Align2::CENTER_CENTER, crate::i18n::tr(label), t.font(11.0), t.text_label);
     if resp.drag_started() {
         let _ = app.run("develop.beginInteraction", json!({"label": crate::i18n::tr_format!("{label} Grading", label = label)}));
     }
@@ -170,7 +170,7 @@ fn grading_wheel(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &DevelopSettings
             pos2(c.x, r.top() - 13.0),
             Align2::CENTER_CENTER,
             format!("H {}°  S {}", wh.hue.round() as i64, wh.sat.round() as i64),
-            t.font(11.0),
+            t.font(10.5),
             t.text_label,
         );
     }

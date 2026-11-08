@@ -58,7 +58,7 @@ fn theme_card<V: PartialEq + Copy>(ui: &mut egui::Ui, t: &Tokens, card: ThemeCar
                 let inner = (width - 18.0).clamp(120.0, 240.0);
                 ui.set_width(inner);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::tr(title)).font(t.semibold(12.0)).color(t.text));
+                    ui.label(RichText::new(crate::i18n::tr(title)).font(t.semibold(11.0)).color(t.text));
                     if active {
                         ui.label(RichText::new(crate::i18n::tr("In Use")).size(11.0).color(t.accent));
                     }
@@ -105,7 +105,7 @@ fn theme_card<V: PartialEq + Copy>(ui: &mut egui::Ui, t: &Tokens, card: ThemeCar
         });
 }
 
-/// A small LightCraft window painted with `kind`'s tokens: the top bar with its search field, the
+/// A small Lightspot window painted with `kind`'s tokens: the top bar with its search field, the
 /// photo with the filmstrip under it, the Edit panel (histogram and sliders), the tool strip and
 /// the bottom bar.
 fn theme_preview(ui: &mut egui::Ui, kind: crate::theme::ThemeKind, width: f32) {

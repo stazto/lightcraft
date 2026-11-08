@@ -8,9 +8,9 @@
 //! so the log of a run that crashed survives the next launch. Runs with `LIGHTCRAFT_NO_PREFS`
 //! (tests, scripts) log to standard error only, so they don't rotate away the user's own logs.
 //!
-//! Levels ([`filter_spec`]): `info` for LightCraft's own crates, `warn` for everything else (wgpu
+//! Levels ([`filter_spec`]): `info` for Lightspot's own crates, `warn` for everything else (wgpu
 //! and naga are chatty). `LIGHTCRAFT_LOG` keeps the meaning it had with the old logger: `info` or
-//! `debug` lowers LightCraft's own crates to that level, any other value means warnings and errors
+//! `debug` lowers Lightspot's own crates to that level, any other value means warnings and errors
 //! only. Without it, `RUST_LOG` replaces the default with env_logger-style directives: `debug`,
 //! `warn,lightcraft_pipeline=trace`, `wgpu_core=info`. A directive ending in `*` matches every
 //! target that starts with it (`lightcraft*=debug`).
@@ -44,7 +44,7 @@ pub const DEFAULT_FILTER: &str = "warn,lightcraft*=info";
 /// The filter directives for this run from `LIGHTCRAFT_LOG` and `RUST_LOG` (blank = unset).
 ///
 /// `LIGHTCRAFT_LOG` wins when set and means what it did for the old stderr logger: `info` or
-/// `debug` for LightCraft's own crates (warnings and errors from everything else), any other value
+/// `debug` for Lightspot's own crates (warnings and errors from everything else), any other value
 /// warnings and errors only. Else `RUST_LOG` as env_logger directives, else [`DEFAULT_FILTER`].
 pub fn filter_spec(lightcraft_log: Option<&str>, rust_log: Option<&str>) -> String {
     let set = |v: Option<&str>| v.map(str::trim).filter(|v| !v.is_empty()).map(str::to_owned);

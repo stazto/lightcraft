@@ -60,6 +60,7 @@ fn select_only_active_yields_to_a_focused_text_field() {
     use lightcraft_catalog::PhotoId;
     let mut h = library();
     h.app.session.execute("library.select", &json!({"ids": [1, 2], "active": 2})).unwrap();
+    h.request("ui.set", json!({"filterBar": true}), std::time::Duration::from_secs(20));
     let r = h.request("ui.clickWidget", json!({"id": "field:search"}), std::time::Duration::from_secs(20));
     assert_eq!(r["ok"], true, "{r}");
     select_only_active_chord(&mut h);
@@ -384,6 +385,7 @@ fn shifted_number_punctuation_rates_and_advances() {
 fn library_keys_yield_to_search_and_crop_context() {
     use lightcraft_catalog::{Flag, PhotoId};
     let mut h = library();
+    h.request("ui.set", json!({"filterBar": true}), std::time::Duration::from_secs(20));
     let r = h.request("ui.clickWidget", json!({"id": "field:search"}), std::time::Duration::from_secs(20));
     assert_eq!(r["ok"], true, "{r}");
     for k in ["5", "6", "P", "X", "U"] {
@@ -601,6 +603,7 @@ mod issue1771 {
     fn issue1771_search_dialog_and_shortcut_recording_keep_enter() {
         for view in [ViewMode::PhotoGrid, ViewMode::SquareGrid] {
             let mut h = grid(view);
+            h.request("ui.set", json!({"filterBar": true}), std::time::Duration::from_secs(20));
             assert_eq!(h.request("ui.clickWidget", json!({"id":"field:search"}), std::time::Duration::from_secs(20))["ok"], true);
             key(&mut h, "Enter", false);
             assert_eq!(h.app.ui.view, view, "focused search");

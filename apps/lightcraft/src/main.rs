@@ -1,4 +1,4 @@
-//! LightCraft desktop app.
+//! Lightspot desktop app.
 //!
 //! Usage: `lightcraft [--library DIR | --memory] [--no-demo] [--control <port>] [files or folders…]`
 //!
@@ -148,11 +148,6 @@ impl eframe::App for App {
 const EXIT_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
 
 fn main() -> eframe::Result {
-    // Windows: the update helper is a copy of this program started with `--finish-update`.
-    #[cfg(windows)]
-    if let Some(result) = craft_update::self_update::finish(&lightcraft_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
-        std::process::exit(i32::from(result.is_err()));
-    }
     // First, so every start-up record is kept for the log file (`logging`).
     let logger = logging::install();
     lightcraft_engine::guard::install_hook(panic_log_path_with(|name| std::env::var_os(name), std::env::temp_dir()));
@@ -195,7 +190,7 @@ fn main() -> eframe::Result {
         match log_dir().filter(|_| !in_memory) {
             Some(dir) => match logger.attach_dir(&dir) {
                 Ok(path) => {
-                    log::info!("LightCraft {}, log file {}", env!("CARGO_PKG_VERSION"), path.display());
+                    log::info!("Lightspot {}, log file {}", env!("CARGO_PKG_VERSION"), path.display());
                     log_file = Some(path);
                 }
                 // The file sink has given up by now, so this goes to standard error only.
@@ -239,14 +234,14 @@ fn main() -> eframe::Result {
     let window_gpu::Chosen { renderer, wgpu_options, which: window_renderer, notice: window_notice } = window_gpu::choose(&win_files, compose_window);
     win_files.arm(window_renderer);
     let win_files_app = win_files.clone();
-    // the window came up: a failure after this is LightCraft stopping, not a start that failed
+    // the window came up: a failure after this is Lightspot stopping, not a start that failed
     let came_up = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let came_up_app = came_up.clone();
     // how the window was when the app was last used (checked: the settings file is a file)
     let opens_as = prefs.as_ref().and_then(|ui| ui.window).and_then(lightcraft_ui_egui::window_place::WindowPlace::checked);
     let options = eframe::NativeOptions {
         renderer,
-        viewport: as_remembered(egui::ViewportBuilder::default().with_title("LightCraft"), opens_as)
+        viewport: as_remembered(egui::ViewportBuilder::default().with_title("Lightspot"), opens_as)
             .with_min_inner_size(lightcraft_ui_egui::window_place::MIN_SIZE)
             .with_drag_and_drop(true)
             .with_transparent(window_gpu::composes_window(compose_window, window_renderer))
@@ -275,7 +270,7 @@ fn main() -> eframe::Result {
     }
     let started = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         eframe::run_native(
-            "LightCraft",
+            "Lightspot",
             options,
             Box::new(move |cc| {
                 // the window's renderer is up (eframe calls this after creating it)
@@ -289,7 +284,6 @@ fn main() -> eframe::Result {
                 // HDR display: SDR unless the surface, platform and display all allow HDR
                 hdr_display::report(cc.wgpu_render_state.as_ref().map(|r| r.target_format));
                 let mut app = LightcraftApp::new(session, services(cc, app_log_file.as_deref()));
-                app.set_startup_update_check(true);
                 if let Some(ui) = prefs {
                     app.ui = ui;
                 }
@@ -368,7 +362,7 @@ fn main() -> eframe::Result {
         )
     }));
     if came_up.load(std::sync::atomic::Ordering::Relaxed) {
-        // the window was up: a panic that escaped it now is LightCraft stopping, typically the
+        // the window was up: a panic that escaped it now is Lightspot stopping, typically the
         // window's renderer after the graphics driver reset the GPU (issue #1337: egui-wgpu panics
         // on the lost device). Not a failed start: no other renderer is tried, and the message
         // says what happened.
@@ -398,7 +392,7 @@ fn main() -> eframe::Result {
     if let Err(e) = &started {
         // the renderer never came up: start again, which tries the next one in the chain
         if window_gpu::relaunch_after_failure(&win_files) {
-            log::error!("LightCraft could not open its window with {}: {e}; trying the next renderer", window_renderer.name());
+            log::error!("Lightspot could not open its window with {}: {e}; trying the next renderer", window_renderer.name());
             return Ok(());
         }
         startup_failed(&e.to_string(), log_file.as_deref());

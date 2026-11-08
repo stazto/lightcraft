@@ -135,7 +135,7 @@ fn user_notice(failed: Option<WindowRenderer>, forced: Option<WindowRenderer>, p
             "{n} {app} now draws its window with {}. To choose another, start {app} with {var}=dx12, vulkan, gl or glow \
              (see docs/gpu-pipeline.md → Troubleshooting).",
             which.name(),
-            app = "LightCraft",
+            app = "Lightspot",
             var = "LIGHTCRAFT_GPU_BACKEND",
         )
     })

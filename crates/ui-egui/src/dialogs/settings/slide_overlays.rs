@@ -206,7 +206,7 @@ pub fn sections(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens) {
 
     // text overlays
     ui.add_space(6.0);
-    ui.label(RichText::new(crate::i18n::tr("Text overlays")).font(t.semibold(11.5)).color(t.text));
+    ui.label(RichText::new(crate::i18n::tr("Text overlays")).font(t.semibold(11.0)).color(t.text));
     let n = s.texts.len();
     for (i, o) in s.texts.iter().enumerate() {
         let id = format!("slideshowText{i}");

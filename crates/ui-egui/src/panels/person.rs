@@ -153,7 +153,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui, name: &str) {
         if back.clicked() {
             let _ = app.run("view.people", json!({}));
         }
-        ui.label(RichText::new(&shown_name).font(t.semibold(15.0)).color(t.text));
+        ui.label(RichText::new(&shown_name).font(t.semibold(14.0)).color(t.text));
         let rename = ui.button(crate::i18n::tr("Rename Person…"));
         register(ui, "person:rename", rename.rect);
         if rename.clicked() {
@@ -230,12 +230,12 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui, name: &str) {
         }
         // the "More" section
         let heading = pos2(area.left() + PAD, area.top() + more_top + 14.0);
-        ui.painter().text(heading, Align2::LEFT_CENTER, "More", t.semibold(15.0), t.text);
+        ui.painter().text(heading, Align2::LEFT_CENTER, "More", t.semibold(14.0), t.text);
         let sub = match &note {
             Some(n) => n.clone(),
             None => format!("Faces that look like {shown_name}. Click to confirm one, ↑ for all above, or × to hide."),
         };
-        ui.painter().text(pos2(area.left() + PAD, area.top() + more_top + 36.0), Align2::LEFT_CENTER, sub, t.font(12.0), t.text_dim);
+        ui.painter().text(pos2(area.left() + PAD, area.top() + more_top + 36.0), Align2::LEFT_CENTER, sub, t.font(11.0), t.text_dim);
         if !recognising {
             let r = Rect::from_min_size(pos2(area.left() + PAD + 330.0, area.top() + more_top + 8.0), vec2(120.0, 24.0));
             let label = if step == super::faces::Setup::TurnOn { "Turn on" } else { "Open Settings" };

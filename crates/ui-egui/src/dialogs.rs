@@ -44,7 +44,6 @@ pub mod print_view;
 pub mod rules_editor;
 pub mod settings;
 pub mod slideshow_export;
-pub mod updates_ui;
 
 /// About dialog tabs: (widget id suffix, label). The credits come from `crate::credits`.
 pub const ABOUT_TABS: &[(&str, &str)] = &[("about", "About"), ("contributors", "Contributors"), ("models", "Models")];
@@ -330,14 +329,14 @@ fn dialog_title(app: &LightcraftApp, dlg: &Dialog) -> String {
         // (nothing to download from in this build: the dialog explains the manual install)
         Dialog::SamModel { .. } if sam_by_hand(&app.session.segmenter) => "Install the SAM 3 Model",
         Dialog::SamModel { .. } => "Download the SAM 3 Model?",
-        Dialog::About => "About LightCraft",
+        Dialog::About => "About Lightspot",
         Dialog::Shortcuts => "Keyboard Shortcuts",
         Dialog::ViewOptions => "View Options",
     }
     .to_string()
 }
 
-/// Whether a dialog only shows something: a model file LightCraft cannot use has nothing to confirm, nor has a
+/// Whether a dialog only shows something: a model file Lightspot cannot use has nothing to confirm, nor has a
 /// dialog that only shows something (one Close, no Cancel / OK).
 fn is_informational(dlg: &Dialog) -> bool {
     let unusable_model = matches!(dlg, Dialog::DenoiseModel { info, .. } | Dialog::FaceModel { info, .. } if info["kind"] == "unsupported");
@@ -746,10 +745,10 @@ fn whats_new_body(ui: &mut egui::Ui, t: &Tokens, dlg: &mut Dialog) {
             let l = line.trim_end();
             if let Some(h) = l.strip_prefix("### ") {
                 ui.add_space(6.0);
-                ui.label(egui::RichText::new(crate::i18n::tr(h)).font(t.semibold(12.5)).color(t.text));
+                ui.label(egui::RichText::new(crate::i18n::tr(h)).font(t.semibold(11.5)).color(t.text));
             } else if let Some(h) = l.strip_prefix("## ") {
                 ui.add_space(8.0);
-                ui.label(egui::RichText::new(crate::i18n::tr(h)).font(t.semibold(14.0)).color(t.text));
+                ui.label(egui::RichText::new(crate::i18n::tr(h)).font(t.semibold(13.0)).color(t.text));
             } else if l.starts_with("# ") || l.is_empty() {
             } else if let Some(b) = l.strip_prefix("- ") {
                 ui.label(egui::RichText::new(format!("•  {}", crate::i18n::tr(b).replace('`', ""))).color(t.text_label));
@@ -831,7 +830,7 @@ fn all_metadata_body(ui: &mut egui::Ui, t: &Tokens, dlg: &mut Dialog) {
         }
         for (g, list) in &groups {
             ui.add_space(6.0);
-            ui.label(egui::RichText::new(g).font(t.semibold(12.5)).color(t.text));
+            ui.label(egui::RichText::new(g).font(t.semibold(11.5)).color(t.text));
             egui::Grid::new(format!("meta-{g}")).num_columns(2).spacing([16.0, 3.0]).striped(true).show(ui, |ui| {
                 for (n, v) in list {
                     ui.label(egui::RichText::new(n).color(t.text_dim));
@@ -1625,7 +1624,7 @@ fn export_apple_photos_rows(ui: &mut egui::Ui, t: &Tokens, opts: &mut ExportOpti
             )
         });
         ui.label(
-            egui::RichText::new(crate::i18n::tr("The first time, macOS asks whether LightCraft may control Photos.")).size(11.0).color(t.text_dim),
+            egui::RichText::new(crate::i18n::tr("The first time, macOS asks whether Lightspot may control Photos.")).size(11.0).color(t.text_dim),
         );
     }
 }
@@ -1831,7 +1830,7 @@ fn move_photos_body(ui: &mut egui::Ui, t: &Tokens, dlg: &mut Dialog) {
 /// The body of the LightroomCatalog dialog.
 fn lightroom_catalog_body(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, dlg: &mut Dialog) {
     let Dialog::LightroomCatalog { folder, catalog } = dlg else { return };
-    ui.label(crate::i18n::tr("This is a Lightroom catalog, not a LightCraft library. Import it into a LightCraft library instead?"));
+    ui.label(crate::i18n::tr("This is a Lightroom catalog, not a Lightspot library. Import it into a Lightspot library instead?"));
     ui.label(egui::RichText::new(catalog.as_deref().unwrap_or(folder.as_str())).color(t.text_dim));
     // (the import then asks where the catalog goes, unless Settings says to merge, #2672)
     let asks = app.ui.settings.lightroom_import == crate::state::LightroomImport::Ask && app.session.library.as_ref().is_some_and(|l| l.on_disk);
@@ -1880,7 +1879,7 @@ fn about_body(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, dlg: &mut 
         1 => crate::credits::contributors_ui(app, ui),
         2 => crate::credits::models_ui(ui),
         _ => {
-            ui.label(egui::RichText::new("LightCraft").font(t.semibold(20.0)).color(t.text));
+            ui.label(egui::RichText::new("Lightspot").font(t.semibold(19.0)).color(t.text));
             ui.label(crate::i18n::tr_format!("Version {} — a clean-room, pure-Rust photo library and raw developer.", env!("CARGO_PKG_VERSION")));
             ui.label(crate::i18n::tr_format!(
                 "MIT OR Apache-2.0. Fonts: {} (OFL). Icons: original.",
@@ -1899,7 +1898,7 @@ fn about_body(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, dlg: &mut 
             }
             ui.add_space(6.0);
             for (label, url) in [
-                ("LightCraft website", crate::links::APP_PAGE),
+                ("Lightspot website", crate::links::APP_PAGE),
                 ("Source code on GitHub", crate::links::GITHUB),
                 ("ArtCraft — more creative apps", crate::links::WEBSITE),
             ] {

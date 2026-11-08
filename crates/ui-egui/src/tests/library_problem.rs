@@ -86,7 +86,7 @@ fn unopenable_library_asks_instead_of_running_a_demo() {
     std::fs::write(&photo, png).unwrap();
 
     // another program has the library open: the launch fails like the desktop host's would
-    let held = lightcraft_catalog::LibraryLock::acquire(&lib, "another LightCraft").unwrap();
+    let held = lightcraft_catalog::LibraryLock::acquire(&lib, "another Lightspot").unwrap();
     let mut session = lightcraft_engine::Session::new().with_fs();
     let err = session.open_library(&lib, true).unwrap_err().to_string();
     let png = |img: &lightcraft_raster::Rgba8| {
@@ -115,7 +115,7 @@ fn unopenable_library_asks_instead_of_running_a_demo() {
     }
     let inspect = h.request("ui.inspect", json!({}), T);
     let p = &inspect["result"]["libraryProblem"];
-    assert!(p["error"].as_str().unwrap().contains("already open in another LightCraft"), "{p}");
+    assert!(p["error"].as_str().unwrap().contains("already open in another Lightspot"), "{p}");
     assert_eq!(p["temporarySession"], false);
 
     // still locked: Try Again keeps the window, with the error
@@ -282,6 +282,7 @@ fn creation_frame_drops_background_text(problem: LibraryProblem, button: &str) {
     let app = LightcraftApp::new(lightcraft_engine::Session::with_demo(), Services { png: None, ..Default::default() });
     let mut h = Headless::new(app, [1200.0, 760.0], 1.0);
     h.settle(T);
+    h.request("ui.set", json!({"filterBar": true, "view": "photoGrid"}), T);
     let r = h.request("ui.clickWidget", json!({"id": "field:search"}), T);
     assert_eq!(r["ok"], true, "the search field takes focus: {r}");
     let r = h.request("ui.text", json!({"text": "base"}), T);

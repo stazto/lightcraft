@@ -81,7 +81,7 @@ const INFO_OVERLAY_GAP: f32 = 3.0;
 
 /// The info overlay's font for line `i` (the file name is the first, larger line).
 fn info_overlay_font(t: &Tokens, i: usize) -> egui::FontId {
-    if i == 0 { t.semibold(15.0) } else { t.font(12.5) }
+    if i == 0 { t.semibold(14.0) } else { t.font(11.5) }
 }
 
 /// How far below the canvas' top the info overlay's text and badges reach (0 when it is off), so a
@@ -182,7 +182,7 @@ pub(super) fn filter_pill(app: &mut LightcraftApp, ui: &mut egui::Ui, canvas: Re
     let p = ui.painter_at(canvas);
     let label =
         chips.iter().map(|c| crate::panels::chips::display_label(c, &app.session.filter, &app.session.catalog)).collect::<Vec<_>>().join("  ·  ");
-    let g = p.layout_no_wrap(crate::i18n::tr_format!("Filtered: {label}", label = label), t.font(12.0), Color32::from_gray(225));
+    let g = p.layout_no_wrap(crate::i18n::tr_format!("Filtered: {label}", label = label), t.font(11.0), Color32::from_gray(225));
     let inset = FILTER_PILL_INSET;
     let w = (g.size().x + 40.0).min((canvas.width() - 2.0 * inset).max(60.0));
     let r = Rect::from_min_size(canvas.min + vec2(inset, inset), vec2(w, FILTER_PILL_HEIGHT));
@@ -207,7 +207,7 @@ pub(super) fn preview_only_pill(ui: &mut egui::Ui, canvas: Rect, reason: &str) {
     let t = Tokens::get(ui.ctx());
     let p = ui.painter_at(canvas);
     let text = crate::i18n::tr_format!("Preview only — editing the camera's embedded JPEG ({})", crate::widgets::preview_only_variant(reason));
-    let g = p.layout_no_wrap(text, t.font(12.0), Color32::WHITE);
+    let g = p.layout_no_wrap(text, t.font(11.0), Color32::WHITE);
     let size = vec2(g.size().x + 40.0, 26.0);
     let r = Rect::from_min_size(pos2(canvas.center().x - size.x / 2.0, canvas.top() + 12.0), size);
     p.rect_filled(r, 13.0, Color32::from_black_alpha(185));
@@ -289,7 +289,7 @@ pub(crate) fn rendering_overdue(wait: &mut RenderingWait, keys: [Option<u64>; 4]
 pub(crate) fn loupe_pill(ui: &egui::Ui, canvas: Rect, over: Rect, navigator: Option<Rect>, id: &str, text: &str, caution: bool) -> Rect {
     let t = Tokens::get(ui.ctx());
     let p = ui.painter_at(canvas);
-    let g = p.layout_no_wrap(text.to_string(), t.font(12.0), Color32::from_gray(225));
+    let g = p.layout_no_wrap(text.to_string(), t.font(11.0), Color32::from_gray(225));
     let inset = if caution { 29.0 } else { 10.0 };
     let size = vec2(g.size().x + inset + 10.0, 20.0);
     let mut r = Rect::from_center_size(pos2(over.center().x, over.bottom() - 12.0 - size.y / 2.0), size);

@@ -419,7 +419,7 @@ fn controls(app: &mut LightcraftApp, ui: &mut egui::Ui, canvas: Rect, now: f64) 
         Some(Title::Ending) => crate::i18n::tr("End").to_string(),
         None => format!("{n} / {of}"),
     };
-    child.painter().text(r.center(), Align2::CENTER_CENTER, label, t.font(13.0), Color32::from_gray(230).gamma_multiply(alpha));
+    child.painter().text(r.center(), Align2::CENTER_CENTER, label, t.font(12.0), Color32::from_gray(230).gamma_multiply(alpha));
     if icon_button(&mut child, "slideshowEnd", Icon::Close, size, false, true, "End slideshow (Esc)").clicked() {
         fire = Some("slideshow.end");
     }

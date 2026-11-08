@@ -149,10 +149,10 @@ pub fn effect_row(app: &mut LightcraftApp, ui: &mut egui::Ui, mask: &Mask) {
     let t = Tokens::get(ui.ctx());
     egui::Frame::NONE.inner_margin(egui::Margin { left: 24, right: 22, top: 2, bottom: 4 }).show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(crate::i18n::tr("Effect")).font(t.font(12.0)).color(t.text_label));
+            ui.label(egui::RichText::new(crate::i18n::tr("Effect")).font(t.font(11.0)).color(t.text_label));
             let current = fx::matching_effect(&app.session, &mask.adjust);
             let label = current.as_deref().map(display_name).unwrap_or_else(|| crate::i18n::tr("Custom").to_string());
-            let r = crate::widgets::dropdown(ui, "maskEffect", &label, t.font(12.0), t.text);
+            let r = crate::widgets::dropdown(ui, "maskEffect", &label, t.font(11.0), t.text);
             if r.clicked() {
                 ui.data_mut(|d| d.insert_temp(state_id(), MenuState::default()));
             }
@@ -216,7 +216,7 @@ fn menu(app: &mut LightcraftApp, ui: &mut egui::Ui, mask: &Mask, current: Option
                 if !group.is_empty() {
                     ui.add_space(4.0);
                     let heading = if group == "★ Favorites" { crate::i18n::tr("★ Favorites").to_string() } else { group.clone() };
-                    ui.label(egui::RichText::new(heading).font(t.semibold(11.5)).color(t.text_dim));
+                    ui.label(egui::RichText::new(heading).font(t.semibold(11.0)).color(t.text_dim));
                 }
             }
             let fav = app.session.mask_effects.iter().any(|e| e.favorite && &e.name == name);
@@ -230,10 +230,10 @@ fn menu(app: &mut LightcraftApp, ui: &mut egui::Ui, mask: &Mask, current: Option
                 ui.painter().rect_filled(rect, 3.0, t.hover);
             }
             if current == Some(name.as_str()) {
-                ui.painter().text(rect.left_center() + vec2(4.0, 0.0), egui::Align2::LEFT_CENTER, "✓", t.font(12.0), t.accent);
+                ui.painter().text(rect.left_center() + vec2(4.0, 0.0), egui::Align2::LEFT_CENTER, "✓", t.font(11.0), t.accent);
             }
             let room = rect.width() - 22.0 - if fav { 16.0 } else { 0.0 };
-            let g = crate::widgets::one_line(ui.painter(), &display_name(name), t.font(12.5), t.text, room);
+            let g = crate::widgets::one_line(ui.painter(), &display_name(name), t.font(11.5), t.text, room);
             let elided = g.elided;
             ui.painter().galley(rect.left_center() + vec2(18.0, -g.size().y / 2.0), g, t.text);
             if fav {
@@ -516,7 +516,7 @@ pub fn manage_body(
             ui.add_space(4.0);
             let heading = if group.is_empty() { crate::i18n::tr("Ungrouped").to_string() } else { group.clone() };
             let h = ui.add(
-                egui::Label::new(egui::RichText::new(format!("{heading}  ({})", list.len())).font(t.semibold(12.0)).color(t.text_label))
+                egui::Label::new(egui::RichText::new(format!("{heading}  ({})", list.len())).font(t.semibold(11.0)).color(t.text_label))
                     .sense(Sense::click()),
             );
             register(ui, format!("effectGroup:{group}"), h.rect);
@@ -552,7 +552,7 @@ pub fn manage_body(
                     } else if r.hovered() {
                         ui.painter().rect_filled(rect, 3.0, t.hover);
                     }
-                    let g = crate::widgets::one_line(ui.painter(), &display_name(&e.name), t.font(12.5), t.text, rect.width() - 8.0);
+                    let g = crate::widgets::one_line(ui.painter(), &display_name(&e.name), t.font(11.5), t.text, rect.width() - 8.0);
                     let elided = g.elided;
                     ui.painter().galley(rect.left_center() + vec2(4.0, -g.size().y / 2.0), g, t.text);
                     let r = if elided { r.on_hover_text(display_name(&e.name)) } else { r };
@@ -692,7 +692,7 @@ fn distinct<'a>(values: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
 }
 
 /// The toast after an import (`preset.import` / `mask.importEffects` result): how many effects,
-/// in how many groups, and the settings they carry that LightCraft can't apply.
+/// in how many groups, and the settings they carry that Lightspot can't apply.
 pub fn import_toast(v: &Value) -> String {
     let rows: Vec<&Value> = v["effects"].as_array().or_else(|| v["imported"].as_array()).into_iter().flatten().collect();
     let mut msg = imported_effects_message(rows.len());

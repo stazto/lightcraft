@@ -16,10 +16,10 @@ pub const GITHUB: &str = "https://github.com/storytold/lightcraft";
 pub const HELP: &str = "https://github.com/storytold/lightcraft/tree/main/docs";
 
 pub const LINKS: &[(&str, &str, &str)] = &[
-    ("app.help", "LightCraft Help", HELP),
+    ("app.help", "Lightspot Help", HELP),
     ("app.discord", "Join the ArtCraft Discord…", DISCORD),
-    ("app.website", "LightCraft Website", APP_PAGE),
-    ("app.github", "LightCraft on GitHub", GITHUB),
+    ("app.website", "Lightspot Website", APP_PAGE),
+    ("app.github", "Lightspot on GitHub", GITHUB),
     ("app.artcraft", "ArtCraft Website", WEBSITE),
     ("app.feedback", "Send Feedback…", FEEDBACK),
 ];

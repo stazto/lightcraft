@@ -3,7 +3,7 @@
 //!
 //! Adding a model is: pick or drop a `.onnx` file → the engine inspects it (`faces.models.inspect`) →
 //! this dialog shows what it is and its terms → the user ticks "I accept" → `faces.models.install`.
-//! LightCraft fetches a model only when the user presses Download on a model it has a pinned address for: the
+//! Lightspot fetches a model only when the user presses Download on a model it has a pinned address for: the
 //! same dialog shows its terms first, and accepting them downloads it (`faces.models.download`: checked against its
 //! size and SHA-256), installs it, starts using it and switches recognition on, with no further question. "Open
 //! page" opens the model's own page in the browser for anything else.
@@ -154,7 +154,7 @@ pub fn setup_banner(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Frame::NONE.inner_margin(egui::Margin::symmetric(12, 6)).show(ui, |ui| {
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new(crate::i18n::tr(message)).font(t.font(12.5)).color(t.text_dim));
+            ui.label(RichText::new(crate::i18n::tr(message)).font(t.font(11.5)).color(t.text_dim));
             let r = ui.button(crate::i18n::tr(button));
             register(ui, "faces:setup", r.rect);
             if r.clicked() {
@@ -299,7 +299,7 @@ pub fn settings_tab(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens) {
     });
     // what is wrong with the user's own catalog (catalog.json in the models folder), if anything
     for e in list["catalog"]["errors"].as_array().into_iter().flatten().filter_map(Value::as_str).take(3) {
-        ui.add(egui::Label::new(RichText::new(format!("catalog.json: {e}")).font(t.font(11.5)).color(t.caution)).wrap());
+        ui.add(egui::Label::new(RichText::new(format!("catalog.json: {e}")).font(t.font(11.0)).color(t.caution)).wrap());
     }
     if let Some(d) = all.iter().find(|m| m["role"] == "detector") {
         ui.add_space(4.0);
@@ -340,7 +340,7 @@ fn model_row(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, m: &Value, 
                         ui.label(RichText::new(crate::i18n::tr("installed")).color(t.text_dim));
                     }
                 });
-                ui.label(RichText::new(licence_line(m)).font(t.font(11.5)).color(if m["licence"]["commercial"] == "yes" {
+                ui.label(RichText::new(licence_line(m)).font(t.font(11.0)).color(if m["licence"]["commercial"] == "yes" {
                     t.text_dim
                 } else {
                     t.caution
@@ -356,7 +356,7 @@ fn model_row(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, m: &Value, 
                     None => (speed.map(str::to_string), true),
                 };
                 if let Some(line) = line {
-                    ui.label(RichText::new(line).font(t.font(11.5)).color(if ok { t.text_dim } else { t.caution }));
+                    ui.label(RichText::new(line).font(t.font(11.0)).color(if ok { t.text_dim } else { t.caution }));
                 }
                 match (dl_state, dl) {
                     (Some("running"), Some(d)) => {
@@ -375,12 +375,12 @@ fn model_row(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, m: &Value, 
                     (Some("done"), _) => {
                         ui.horizontal(|ui| {
                             crate::progress::spinner(ui, 12.0);
-                            ui.label(RichText::new(crate::i18n::tr("Downloaded and checked. Installing…")).font(t.font(11.5)).color(t.text_dim));
+                            ui.label(RichText::new(crate::i18n::tr("Downloaded and checked. Installing…")).font(t.font(11.0)).color(t.text_dim));
                         });
                     }
                     (Some("failed"), Some(d)) => {
                         let why = crate::panels::denoise::download_failure(d);
-                        ui.add(egui::Label::new(RichText::new(why).font(t.font(11.5)).color(t.caution)).wrap());
+                        ui.add(egui::Label::new(RichText::new(why).font(t.font(11.0)).color(t.caution)).wrap());
                     }
                     _ => {}
                 }
@@ -450,10 +450,10 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
     let kind = info["kind"].as_str().unwrap_or("unsupported");
     let file = info["fileName"].as_str().unwrap_or("");
     if kind == "unsupported" {
-        ui.label(RichText::new(crate::i18n::tr("This file cannot be used yet")).font(t.semibold(13.5)).color(t.caution));
+        ui.label(RichText::new(crate::i18n::tr("This file cannot be used yet")).font(t.semibold(12.5)).color(t.caution));
         ui.add(
             egui::Label::new(
-                RichText::new(sentence(info["reason"].as_str().unwrap_or("It is not a face recognition model LightCraft understands")))
+                RichText::new(sentence(info["reason"].as_str().unwrap_or("It is not a face recognition model Lightspot understands")))
                     .color(t.text_label),
             )
             .wrap(),
@@ -463,7 +463,7 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
     }
     let m = &info["model"];
     ui.horizontal(|ui| {
-        ui.label(RichText::new(m["name"].as_str().unwrap_or(file)).font(t.semibold(14.0)).color(t.text));
+        ui.label(RichText::new(m["name"].as_str().unwrap_or(file)).font(t.semibold(13.0)).color(t.text));
         ui.label(RichText::new(mb(info["sizeBytes"].as_u64())).color(t.text_dim));
     });
     if info["alreadyInstalled"] == true {
@@ -476,7 +476,7 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
         ui.add(
             egui::Label::new(
                 RichText::new(format!(
-                    "Downloads from {host}. Once it has arrived and checked out, LightCraft installs it{}.",
+                    "Downloads from {host}. Once it has arrived and checked out, Lightspot installs it{}.",
                     if detector { "" } else { ", starts using it and turns face recognition on" }
                 ))
                 .color(t.text_label),
@@ -485,7 +485,7 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
         );
     }
     let commercial = m["licence"]["commercial"].as_str().unwrap_or("unknown");
-    ui.label(RichText::new(licence_line(m)).font(t.semibold(12.5)).color(if commercial == "yes" { t.text } else { t.caution }));
+    ui.label(RichText::new(licence_line(m)).font(t.semibold(11.5)).color(if commercial == "yes" { t.text } else { t.caution }));
     let notice = m["licence"]["notice"].as_str().unwrap_or("");
     if !notice.is_empty() {
         ui.add(egui::Label::new(RichText::new(notice).color(t.text_label)).wrap());
@@ -498,9 +498,9 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
     }
     if kind == "draft" {
         ui.add_space(2.0);
-        ui.label(RichText::new(crate::i18n::tr("LightCraft does not know this model, so it assumed:")).color(t.text_label));
+        ui.label(RichText::new(crate::i18n::tr("Lightspot does not know this model, so it assumed:")).color(t.text_label));
         for a in info["assumptions"].as_array().into_iter().flatten().filter_map(Value::as_str) {
-            ui.add(egui::Label::new(RichText::new(format!("•  {a}")).font(t.font(12.0)).color(t.text_dim)).wrap());
+            ui.add(egui::Label::new(RichText::new(format!("•  {a}")).font(t.font(11.0)).color(t.text_dim)).wrap());
         }
     }
     if let Some(url) = m["source"].as_str().or(m["licence"]["url"].as_str()) {
@@ -513,11 +513,11 @@ pub fn model_dialog(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, info
     ui.add_space(4.0);
     check(ui, "faceModel.accept", accepted, "I have read these terms and accept them for my own use");
     let closing = if download {
-        "Nothing is fetched until you accept. The model is kept on this computer only; LightCraft never uploads or shares it."
+        "Nothing is fetched until you accept. The model is kept on this computer only; Lightspot never uploads or shares it."
     } else {
-        "The model is kept on this computer only. LightCraft never uploads or shares it."
+        "The model is kept on this computer only. Lightspot never uploads or shares it."
     };
-    ui.label(RichText::new(closing).font(t.font(11.5)).color(t.text_dim));
+    ui.label(RichText::new(closing).font(t.font(11.0)).color(t.text_dim));
 }
 
 /// Pressing Download: the model's terms first, in the same dialog as a model file. Accepting them starts the download;
@@ -683,13 +683,13 @@ pub fn name_editor(
                 }
             }
             if let Some(label) = setup.short() {
-                let b = ui.add(egui::Button::new(RichText::new(crate::i18n::tr(label)).font(t.font(12.0)).color(t.accent)).frame(false));
+                let b = ui.add(egui::Button::new(RichText::new(crate::i18n::tr(label)).font(t.font(11.0)).color(t.accent)).frame(false));
                 register(ui, "faces:setup", b.rect);
                 if b.clicked() {
                     outcome = Editor::Setup;
                 }
             }
-            ui.label(RichText::new(crate::i18n::tr("Enter to confirm, Esc to cancel")).font(t.font(11.0)).color(t.text_dim));
+            ui.label(RichText::new(crate::i18n::tr("Enter to confirm, Esc to cancel")).font(t.font(10.5)).color(t.text_dim));
         });
     });
     if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {

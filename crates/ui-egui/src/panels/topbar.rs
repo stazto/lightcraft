@@ -1,12 +1,36 @@
-//! The top bar: sidebar toggle, back/forward, search, filter, and the right-hand icons.
+//! The top bar: sidebar toggle, back/forward, the identity plate, the module picker (Library,
+//! Develop, Slideshow, Print, as Lightroom Classic arranges them) and the right-hand icons.
 
-use egui::{Align2, Rect, Sense, Stroke, StrokeKind, pos2, vec2};
+use egui::{Align2, Rect, Sense, pos2, vec2};
 use serde_json::json;
 
 use crate::LightcraftApp;
 use crate::icons::{Icon, paint};
+use crate::state::{RightPanel, ViewMode};
 use crate::theme::Tokens;
 use crate::widgets::{icon_button, register};
+
+/// The product name shown on the identity plate.
+pub const PRODUCT: &str = "Lightspot";
+
+/// The modules of the picker: widget id, label and the command a click runs.
+const MODULES: &[(&str, &str, &str)] = &[
+    ("library", "Library", "view.photoGrid"),
+    ("develop", "Develop", "view.detail"),
+    ("slideshow", "Slideshow", "view.slideshow"),
+    ("print", "Print", "dialog.print"),
+];
+
+/// Which module is lit: the slideshow while it runs, Develop in the detail view, else Library.
+fn active_module(app: &LightcraftApp) -> &'static str {
+    if app.ui.slideshow.is_some() {
+        "slideshow"
+    } else if app.ui.view == ViewMode::Detail {
+        "develop"
+    } else {
+        "library"
+    }
+}
 
 /// The bar doubles as the window's title bar: dragging its empty space moves the window and a
 /// double-click acts as the system setting says. Made before the bar's widgets so they win the click.
@@ -17,12 +41,12 @@ fn window_handle(ui: &mut egui::Ui, bar: Rect) {
 }
 
 /// Draw the top bar: the titlebar drag area, the in-window menus when there is no native menu
-/// bar, sidebar and back/forward buttons, the centred search field, the filter button with its
-/// active count, and the right-side action icons.
+/// bar, sidebar and back/forward buttons, the identity plate, the module picker and the
+/// right-side action icons.
 pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     // room for the traffic lights; in full screen they are gone, and the sidebar button sits as far
-    // from the left edge as the Discord button from the right (12 margin + 4)
+    // from the left edge as the last icon from the right (12 margin + 4)
     let left = match (app.integrated_titlebar, app.window_is_fullscreen) {
         (true, false) => 78,
         (true, true) => 16,
@@ -40,108 +64,145 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
         .show(ui, |ui| {
             crate::widgets::announce_region(ui, egui::accesskit::Role::Toolbar, crate::i18n::tr("Top bar"));
             let full = ui.max_rect();
-            // The whole bar, its margins included. The search field is centred on this and not on
-            // `full`, which is only what the margins leave: on macOS the left margin holds the
-            // traffic lights' room, and full screen gives that room back. Centring on `full` moved
-            // the field, and changed its width, every time that room changed (issue #2365).
+            // the whole bar, its margins included
             let bar = Rect::from_min_max(pos2(full.left() - left as f32, full.top()), pos2(full.right() + 12.0, full.bottom()));
-            // The field stops short of the filter icon and the seven icons on the right; centred,
-            // it is twice the room between the window's centre and them.
-            let mut sw = 640.0f32.min(2.0 * (full.right() - 310.0 - bar.center().x)).max(190.0);
-            if !app.native_menu {
-                // leave room for the in-window menus left of the (centred) search field
-                let menus_right = full.left() + 140.0 + crate::menubar::bar_width(ui) + 24.0;
-                sw = sw.min(2.0 * (bar.center().x - menus_right)).max(190.0);
-            }
-            let search_left = bar.center().x - sw / 2.0;
-            let sr = Rect::from_center_size(pos2(bar.center().x, full.center().y), vec2(sw, 28.0));
             if app.integrated_titlebar {
                 window_handle(ui, bar);
             }
-            nav_buttons(app, ui, search_left);
-            search_field(app, ui, &t, sr);
-            filter_button(app, ui, &t, sr);
             let x = right_icons(app, ui, &t, full);
-            appearance_button(app, ui, &t, full, x);
+            let x = appearance_button(app, ui, &t, full, x);
+            let x = filter_button(app, ui, &t, full, x);
+            // the picker ends 20 points before the icons; what is left of it goes to the menus
+            let modules_w = module_picker_width(ui, &t);
+            let modules_right = x - 14.0 - 20.0;
+            let modules_left = modules_right - modules_w;
+            nav_buttons(app, ui, modules_left);
+            module_picker(app, ui, &t, full, modules_left, modules_w);
         });
     if let Some(slot) = slot {
         ui.ctx().layer_painter(ui.layer_id()).set(slot, egui::Shape::rect_filled(panel.response.rect, 0.0, t.chrome));
     }
 }
 
-/// Sidebar toggle, back/forward and, without a native menu bar, the in-window menus.
-fn nav_buttons(app: &mut LightcraftApp, ui: &mut egui::Ui, search_left: f32) {
+/// Sidebar toggle, back/forward and then the identity plate with a native menu bar, or the
+/// in-window menus without one. `limit` is where the module picker starts.
+fn nav_buttons(app: &mut LightcraftApp, ui: &mut egui::Ui, limit: f32) {
+    let t = Tokens::get(ui.ctx());
     ui.horizontal_centered(|ui| {
-        ui.spacing_mut().item_spacing.x = 4.0;
-        if icon_button(ui, "sidebar", Icon::Sidebar, vec2(30.0, 30.0), app.ui.left_panel, true, crate::i18n::tr("Show/hide My Photos panel"))
+        ui.spacing_mut().item_spacing.x = 2.0;
+        if icon_button(ui, "sidebar", Icon::Sidebar, vec2(26.0, 26.0), app.ui.left_panel, true, crate::i18n::tr("Show/hide My Photos panel"))
             .clicked()
         {
             let _ = app.run("view.leftPanel", json!({}));
         }
-        ui.add_space(8.0);
-        if icon_button(ui, "back", Icon::Back, vec2(30.0, 30.0), false, true, crate::i18n::tr("Back")).clicked() {
+        ui.add_space(6.0);
+        if icon_button(ui, "back", Icon::Back, vec2(26.0, 26.0), false, true, crate::i18n::tr("Back")).clicked() {
             let _ = app.run("view.back", json!({}));
         }
-        icon_button(ui, "forward", Icon::Forward, vec2(30.0, 30.0), false, false, crate::i18n::tr("Forward"));
-        if !app.native_menu {
+        icon_button(ui, "forward", Icon::Forward, vec2(26.0, 26.0), false, false, crate::i18n::tr("Forward"));
+        if app.native_menu {
+            ui.add_space(10.0);
+            identity_plate(ui, &t, limit);
+        } else {
             // no native menu bar (web, Windows, Linux): menus in the top bar
             ui.add_space(10.0);
-            let room = search_left - ui.cursor().left() - 16.0;
+            let room = limit - ui.cursor().left() - 16.0;
             crate::menubar::show_in_window(app, ui, room);
         }
     });
 }
 
-/// The centred search field with its placeholder and focus ring.
-fn search_field(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, sr: Rect) {
-    // search field (centred on the window)
-    let id = crate::text_field::id("field:search");
-    if std::mem::take(&mut app.ui.focus_search) {
-        ui.memory_mut(|m| m.request_focus(id));
+/// The mark (a rounded navy tile with "Ls" in cyan, drawn here) and the product name beside it,
+/// as Lightroom's identity plate sits at the left of its top bar. Skipped when there is no room.
+fn identity_plate(ui: &mut egui::Ui, t: &Tokens, limit: f32) {
+    let name = ui.painter().layout_no_wrap(PRODUCT.into(), t.semibold(13.0), t.text);
+    let w = 22.0 + 8.0 + name.size().x;
+    if ui.cursor().left() + w > limit - 24.0 {
+        return;
     }
-    let focused = ui.memory(|m| m.has_focus(id));
-    ui.painter().rect(
-        sr,
-        4.0,
-        if focused { t.canvas } else { t.field },
-        Stroke::new(1.0, if focused { t.accent } else { t.field_border }),
-        StrokeKind::Inside,
-    );
-    let mut child =
-        ui.new_child(egui::UiBuilder::new().max_rect(sr.shrink2(vec2(10.0, 4.0))).layout(egui::Layout::left_to_right(egui::Align::Center)));
-    let empty = app.ui.search.is_empty();
-    if empty && !focused {
-        let g = child.painter().layout_no_wrap(crate::i18n::tr("Search Photos").into(), t.font(13.5), t.text_dim);
-        let w = g.size().x + 24.0;
-        let x0 = sr.center().x - w / 2.0;
-        paint(child.painter(), Rect::from_min_size(pos2(x0, sr.center().y - 8.0), vec2(16.0, 16.0)), Icon::Search, t.text_dim);
-        child.painter().galley(pos2(x0 + 24.0, sr.center().y - g.size().y / 2.0), g, t.text_dim);
+    let (r, resp) = ui.allocate_exact_size(vec2(w, 26.0), Sense::hover());
+    crate::widgets::announce(&resp, PRODUCT);
+    register(ui, "brand:identity", r);
+    let p = ui.painter();
+    let tile = Rect::from_center_size(pos2(r.left() + 11.0, r.center().y), vec2(22.0, 22.0));
+    p.rect_filled(tile, 6.0, egui::Color32::from_rgb(0x02, 0x17, 0x3b));
+    p.text(tile.center() + vec2(0.0, -0.5), Align2::CENTER_CENTER, "Ls", t.semibold(12.0), egui::Color32::from_rgb(0x2d, 0xc0, 0xfe));
+    p.galley(pos2(tile.right() + 8.0, r.center().y - name.size().y / 2.0), name, t.text);
+}
+
+/// The width the module picker takes: its labels, the gaps and the dividers between them.
+fn module_picker_width(ui: &egui::Ui, t: &Tokens) -> f32 {
+    let mut w = 0.0;
+    for (i, (_, label, _)) in MODULES.iter().enumerate() {
+        let g = ui.painter().layout_no_wrap(crate::i18n::tr(label).into(), t.semibold(13.0), t.text);
+        w += g.size().x + 20.0;
+        if i + 1 < MODULES.len() {
+            w += 9.0;
+        }
     }
-    let resp = crate::text_field::TextField::singleline("field:search", &mut app.ui.search)
-        .label(crate::i18n::tr("Search Photos"))
-        .frame(false)
-        .width(sr.width() - 20.0)
-        .font(t.font(13.5))
-        .text_color(t.text)
-        .show(&mut child)
-        .response;
-    if resp.changed() {
-        let q = app.ui.search.clone();
-        let _ = app.run("library.filter", json!({"text": q}));
+    w
+}
+
+/// Lightroom's module picker: the modules' names in a row, the current one lit, thin dividers
+/// between them. A click goes to that module.
+fn module_picker(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rect, left: f32, width: f32) {
+    let row = Rect::from_min_size(pos2(left, full.top()), vec2(width, full.height()));
+    register(ui, "modules", row);
+    let active = active_module(app);
+    let mut x = row.left();
+    let mut run = None;
+    for (i, (id, label, cmd)) in MODULES.iter().enumerate() {
+        let text = crate::i18n::tr(label);
+        // laid out in the placeholder colour, so the colour given when it is painted is the one shown
+        let g = ui.painter().layout_no_wrap(text.into(), t.semibold(13.0), egui::Color32::PLACEHOLDER);
+        let r = Rect::from_min_size(pos2(x, row.top() + 6.0), vec2(g.size().x + 20.0, row.height() - 12.0));
+        let resp = ui.interact(r, egui::Id::unique(("module", *id)), Sense::click());
+        crate::widgets::announce_selected(&resp, text, *id == active);
+        register(ui, format!("module:{id}"), r);
+        let on = *id == active;
+        let colour = if on {
+            t.text
+        } else if resp.hovered() {
+            t.text_label
+        } else {
+            t.text_dim
+        };
+        if resp.hovered() && !on {
+            ui.painter().rect_filled(r, 6.0, t.hover.gamma_multiply(0.5));
+        }
+        ui.painter().galley(pos2(r.left() + 10.0, r.center().y - g.size().y / 2.0), g, colour);
+        if resp.clicked() && !on {
+            run = Some((*id, *cmd));
+        }
+        x = r.right();
+        if i + 1 < MODULES.len() {
+            let div = Rect::from_center_size(pos2(x + 4.5, row.center().y), vec2(1.0, 12.0));
+            ui.painter().rect_filled(div, 0.0, t.text_disabled);
+            x += 9.0;
+        }
+    }
+    if let Some((id, cmd)) = run {
+        if let Err(e) = app.run(cmd, json!({})) {
+            app.toast_error(ui.ctx(), e);
+        } else if id == "develop" && !app.ui.right.is_edit_tool() {
+            // Develop shows the photo with its sliders
+            let _ = app.run("panel.edit", json!({}));
+        } else if id == "develop" && app.ui.right == RightPanel::None {
+            let _ = app.run("panel.edit", json!({}));
+        }
     }
 }
 
-/// The filter icon beside the search field, with the active-filter badge.
-fn filter_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, sr: Rect) {
-    // filter icon right of the search field
-    let fr = Rect::from_center_size(pos2(sr.right() + 22.0, sr.center().y), vec2(28.0, 28.0));
+/// The filter icon at `x`, with the active-filter badge; returns the x of the next control.
+fn filter_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rect, x: f32) -> f32 {
+    let fr = Rect::from_center_size(pos2(x, full.center().y), vec2(24.0, 24.0));
     let fresp = ui.interact(fr, egui::Id::unique("filter-btn"), Sense::click());
     crate::widgets::announce(&fresp, crate::i18n::tr("Filters"));
     register(ui, "icon:filter", fr);
     let filtering = app.session.filter != Default::default() || app.ui.filter_bar;
     paint(
         ui.painter(),
-        fr.shrink(6.0),
+        fr.shrink(5.0),
         Icon::Filter,
         if filtering {
             t.accent
@@ -154,9 +215,9 @@ fn filter_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, sr: Rec
     // badge: how many filters are on, even with the filter bar closed
     let active = lightcraft_engine::filter_chips(&app.session.filter, &app.session.catalog).len();
     if active > 0 {
-        let c = fr.right_top() + vec2(-3.0, 8.0);
-        ui.painter().circle_filled(c, 7.0, t.accent);
-        ui.painter().text(c, Align2::CENTER_CENTER, active.to_string(), t.semibold(9.5), t.canvas);
+        let c = fr.right_top() + vec2(-3.0, 6.0);
+        ui.painter().circle_filled(c, 6.5, t.accent);
+        ui.painter().text(c, Align2::CENTER_CENTER, active.to_string(), t.semibold(9.0), t.canvas);
     }
     let fresp = fresp.on_hover_text(if active > 0 {
         crate::i18n::tr_format!("Filter bar — {active} active filter{}", if active == 1 { "" } else { "s" }, active = active)
@@ -166,12 +227,12 @@ fn filter_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, sr: Rec
     if fresp.clicked() {
         let _ = app.run("view.filterBar", json!({}));
     }
+    x - 34.0
 }
 
-/// The right-side action icons; returns the x where the next icon would go.
+/// The right-side action icons; returns the x where the next icon goes.
 fn right_icons(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rect) -> f32 {
-    // right icons
-    let mut x = full.right() - 18.0;
+    let mut x = full.right() - 16.0;
     // saving is failing: the cloud icon turns into a warning until a save succeeds
     let unsaved = app.session.unsaved().map(|(n, e)| unsaved_tip(n, e));
     let cloud_tip = unsaved.as_deref().unwrap_or("Local library — no cloud account needed");
@@ -182,14 +243,13 @@ fn right_icons(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rec
         None => crate::i18n::tr("Import Photos…").to_string(),
     };
     for (id, icon, tip, cmd) in [
-        ("discord", Icon::Chat, "Join the ArtCraft community on Discord", "app.discord"),
         ("cloud", Icon::Cloud, cloud_tip, ""),
         ("help", Icon::Help, "Keyboard shortcuts", "app.shortcuts"),
         ("share", Icon::Share, "Export", "dialog.export"),
         ("import", Icon::Plus, import_tip.as_str(), "file.addPhotos"),
         ("bell", Icon::Bell, "Activity", "panel.activity"),
     ] {
-        let r = Rect::from_center_size(pos2(x, full.center().y), vec2(28.0, 28.0));
+        let r = Rect::from_center_size(pos2(x, full.center().y), vec2(24.0, 24.0));
         let tip = crate::i18n::tr(tip);
         let resp = ui.interact(r, egui::Id::unique(("top", id)), Sense::click());
         let name = crate::widgets::accessible_label(&resp, tip);
@@ -204,11 +264,11 @@ fn right_icons(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rec
         } else {
             t.icon
         };
-        paint(ui.painter(), r.shrink(5.0), icon, colour);
+        paint(ui.painter(), r.shrink(4.0), icon, colour);
         if warn {
-            let c = r.right_top() + vec2(-5.0, 6.0);
-            ui.painter().circle_filled(c, 6.0, t.reject);
-            ui.painter().text(c, Align2::CENTER_CENTER, "!", t.semibold(9.5), t.canvas);
+            let c = r.right_top() + vec2(-4.0, 5.0);
+            ui.painter().circle_filled(c, 5.5, t.reject);
+            ui.painter().text(c, Align2::CENTER_CENTER, "!", t.semibold(9.0), t.canvas);
             register(ui, "indicator:unsaved", r);
         }
         // a refusal says why (Import while a Lightroom catalog is coming in)
@@ -218,21 +278,21 @@ fn right_icons(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rec
         {
             app.toast_error(ui.ctx(), e);
         }
-        x -= 40.0;
+        x -= 34.0;
     }
     x
 }
 
-/// The appearance icon at `x`, with its theme-favourites menu.
-fn appearance_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rect, x: f32) {
+/// The appearance icon at `x`, with its theme-favourites menu; returns the x of the next control.
+fn appearance_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, full: Rect, x: f32) -> f32 {
     // Appearance Mode: a click steps Auto → Light → Dark → Auto; the icon shows the mode
     let (icon, mode) = appearance_icon(app.ui.settings.appearance_mode);
-    let r = Rect::from_center_size(pos2(x, full.center().y), vec2(28.0, 28.0));
+    let r = Rect::from_center_size(pos2(x, full.center().y), vec2(24.0, 24.0));
     let tip = format!("{}: {}", crate::i18n::tr("Appearance Mode"), crate::i18n::tr(mode));
     let resp = ui.interact(r, egui::Id::unique(("top", "appearance")), Sense::click()).on_hover_text(tip.clone());
     crate::widgets::announce(&resp, tip.clone());
     register(ui, "icon:appearance", r);
-    paint(ui.painter(), r.shrink(5.0), icon, if resp.hovered() { t.text } else { t.icon });
+    paint(ui.painter(), r.shrink(4.0), icon, if resp.hovered() { t.text } else { t.icon });
     if resp.clicked() {
         let _ = app.run("view.appearance", json!({}));
     }
@@ -260,6 +320,7 @@ fn appearance_button(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens, ful
             }
         }
     });
+    x - 34.0
 }
 
 /// The appearance button's icon and the mode's name for its tooltip.
@@ -277,7 +338,7 @@ fn unsaved_tip(n: usize, e: &str) -> String {
     let s = crate::i18n::plural_s(n);
     let it = if n == 1 { "it" } else { "them" };
     crate::i18n::tr_format!(
-        "{n} change{} saved in memory but not written to disk: {e}\nLightCraft retries automatically; quitting now would lose {}.",
+        "{n} change{} saved in memory but not written to disk: {e}\nLightspot retries automatically; quitting now would lose {}.",
         s,
         it,
         e = e,

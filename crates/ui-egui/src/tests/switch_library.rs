@@ -104,14 +104,14 @@ fn new_library_creates_opens_and_is_remembered_and_named() {
     let dir = temp("newlib");
     let mut app = app_in(&dir);
     app.library_changed(&egui::Context::default());
-    assert_eq!(app.window_title(), "LightCraft — first");
+    assert_eq!(app.window_title(), "Lightspot — first");
 
     let r = app.run("app.newLibrary", json!({"path": dir.to_string_lossy(), "name": "Client A"})).unwrap();
     assert_eq!(r["name"], "Client A");
     let a = dir.join("Client A");
     assert_eq!(app.session.library.as_ref().unwrap().dir, a);
     assert!(lightcraft_engine::library::is_library(&a), "the catalog is written");
-    assert_eq!(app.window_title(), "LightCraft — Client A");
+    assert_eq!(app.window_title(), "Lightspot — Client A");
     assert_eq!(app.ui.settings.library_path, a.to_string_lossy());
 
     // a second New Library at the same place is refused and the current one stays open
@@ -142,7 +142,7 @@ fn new_library_creates_opens_and_is_remembered_and_named() {
         })
         .expect("first in Open Recent Library");
     app.run("app.openLibrary", first).unwrap();
-    assert_eq!(app.window_title(), "LightCraft — first");
+    assert_eq!(app.window_title(), "Lightspot — first");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -279,13 +279,13 @@ fn page_title_names_the_active_photo_and_unsaved_changes() {
     let ids = app.session.visible_cloned();
     let name = |app: &LightcraftApp, id: lightcraft_catalog::PhotoId| app.session.catalog.photo(id).unwrap().file_name.clone();
     app.run("library.select", json!({"ids": [ids[0].0]})).unwrap();
-    assert_eq!(app.page_title(false), format!("{} — LightCraft", name(&app, ids[0])));
-    assert_eq!(app.page_title(true), format!("{} • — LightCraft", name(&app, ids[0])));
+    assert_eq!(app.page_title(false), format!("{} — Lightspot", name(&app, ids[0])));
+    assert_eq!(app.page_title(true), format!("{} • — Lightspot", name(&app, ids[0])));
     app.run("library.select", json!({"ids": [ids[1].0]})).unwrap();
-    assert_eq!(app.page_title(false), format!("{} — LightCraft", name(&app, ids[1])));
+    assert_eq!(app.page_title(false), format!("{} — Lightspot", name(&app, ids[1])));
     // no photo: the window title
     let empty = LightcraftApp::new(lightcraft_engine::Session::new(), Services::default());
     assert!(empty.session.active().is_none());
-    assert_eq!(empty.page_title(false), "LightCraft");
-    assert_eq!(empty.page_title(true), "LightCraft •");
+    assert_eq!(empty.page_title(false), "Lightspot");
+    assert_eq!(empty.page_title(true), "Lightspot •");
 }

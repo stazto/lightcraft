@@ -2,7 +2,7 @@
 //! edited state and camera / lens / keyword pickers — every control drives `library.filter`.
 //! "Save as Smart Album…" keeps the current view as a live album; "Clear" resets the filter.
 
-use egui::{Color32, Rect, Sense, Stroke, StrokeKind, vec2};
+use egui::{Color32, Rect, Sense, Stroke, StrokeKind, pos2, vec2};
 use lightcraft_catalog::{ColorLabel, Flag, MediaKind, RatingOp};
 use serde_json::{Value, json};
 
@@ -11,7 +11,7 @@ use crate::icons::{Icon, paint};
 use crate::theme::Tokens;
 use crate::widgets::register;
 
-pub const HEIGHT: f32 = 40.0;
+pub const HEIGHT: f32 = 36.0;
 /// Bar width (points) below which the controls take two rows.
 const WIDE: f32 = 1240.0;
 
@@ -22,24 +22,61 @@ fn filter(app: &mut LightcraftApp, patch: Value) {
     let _ = app.run("library.filter", patch);
 }
 
+/// The text filter (`field:search`): a rounded field with a magnifier and a placeholder, filtering
+/// the library as the text changes. Cmd+F (`view.focusSearch`) opens the bar and lands here.
+fn search_field(app: &mut LightcraftApp, ui: &mut egui::Ui, t: &Tokens) {
+    let id = crate::text_field::id("field:search");
+    if std::mem::take(&mut app.ui.focus_search) {
+        ui.memory_mut(|m| m.request_focus(id));
+    }
+    let focused = ui.memory(|m| m.has_focus(id));
+    let (sr, _) = ui.allocate_exact_size(vec2(200.0, 24.0), Sense::hover());
+    ui.painter().rect(
+        sr,
+        7.0,
+        if focused { t.canvas } else { t.field },
+        Stroke::new(1.0, if focused { t.accent } else { t.field_border }),
+        StrokeKind::Inside,
+    );
+    let mut child =
+        ui.new_child(egui::UiBuilder::new().max_rect(sr.shrink2(vec2(8.0, 3.0))).layout(egui::Layout::left_to_right(egui::Align::Center)));
+    if app.ui.search.is_empty() && !focused {
+        let g = child.painter().layout_no_wrap(crate::i18n::tr("Search Photos").into(), t.font(11.5), t.text_dim);
+        paint(child.painter(), Rect::from_min_size(pos2(sr.left() + 8.0, sr.center().y - 7.0), vec2(14.0, 14.0)), Icon::Search, t.text_dim);
+        child.painter().galley(pos2(sr.left() + 26.0, sr.center().y - g.size().y / 2.0), g, t.text_dim);
+    }
+    let resp = crate::text_field::TextField::singleline("field:search", &mut app.ui.search)
+        .label(crate::i18n::tr("Search Photos"))
+        .frame(false)
+        .width(sr.width() - 16.0)
+        .font(t.font(11.5))
+        .text_color(t.text)
+        .show(&mut child)
+        .response;
+    if resp.changed() {
+        let q = app.ui.search.clone();
+        let _ = app.run("library.filter", json!({"text": q}));
+    }
+}
+
 /// A small label before a group of controls.
 fn caption(ui: &mut egui::Ui, text: &str) {
     let t = Tokens::get(ui.ctx());
-    ui.label(egui::RichText::new(crate::i18n::tr(text)).font(t.font(12.0)).color(t.text_dim));
+    ui.label(egui::RichText::new(crate::i18n::tr(text)).font(t.font(11.0)).color(t.text_dim));
 }
 
 /// A square toggle with an icon or a colour swatch.
 fn toggle(ui: &mut egui::Ui, id: &str, on: bool, tip: &str, draw: impl FnOnce(&egui::Painter, Rect, Color32)) -> egui::Response {
     let t = Tokens::get(ui.ctx());
-    let (r, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
+    let (r, resp) = ui.allocate_exact_size(vec2(24.0, 24.0), Sense::click());
     crate::widgets::announce_selected(&resp, crate::i18n::tr(tip), on);
     register(ui, format!("filter:{id}"), r);
     let p = ui.painter();
     if on {
-        p.rect_filled(r, 5.0, t.tool_active);
-        p.rect_stroke(r, 5.0, Stroke::new(1.0, t.accent), StrokeKind::Inside);
+        p.rect_filled(r, 6.0, t.tool_active);
+        p.rect_stroke(r, 6.0, Stroke::new(1.0, t.accent), StrokeKind::Inside);
     } else if resp.hovered() {
-        p.rect_filled(r, 5.0, t.hover);
+        p.rect_filled(r, 6.0, t.hover);
     }
     draw(
         p,
@@ -62,7 +99,7 @@ fn picker(app: &mut LightcraftApp, ui: &mut egui::Ui, id: &str, current: &str, a
         ui,
         &format!("filter-{id}"),
         if active && matches!(id, "camera" | "lens" | "keyword") { current } else { crate::i18n::tr(current) },
-        t.font(12.5),
+        t.font(11.5),
         if active { t.text } else { t.text_label },
     );
     if active {
@@ -111,6 +148,9 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let mut row1 = row(ui, 0.0);
     let mut row2 = row(ui, 1.0);
     let ui = &mut row1;
+
+    search_field(app, ui, &t);
+    ui.add_space(10.0);
 
     // rating: operator + stars
     caption(ui, "Rating");
@@ -259,19 +299,19 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     // save / clear
     ui.add_space(14.0);
     let filtering = app.session.filter != Default::default();
-    let save = ui.add_enabled(filtering, egui::Button::new(egui::RichText::new(crate::i18n::tr("Save as Smart Album…")).font(t.font(12.5))));
+    let save = ui.add_enabled(filtering, egui::Button::new(egui::RichText::new(crate::i18n::tr("Save as Smart Album…")).font(t.font(11.5))));
     register(ui, "button:filterSave", save.rect);
     if save.clicked() {
         let _ = app.run("dialog.newSmartAlbum", json!({}));
     }
-    let clear = ui.add_enabled(filtering, egui::Button::new(egui::RichText::new(crate::i18n::tr("Clear")).font(t.font(12.5))));
+    let clear = ui.add_enabled(filtering, egui::Button::new(egui::RichText::new(crate::i18n::tr("Clear")).font(t.font(11.5))));
     register(ui, "button:filterClear", clear.rect);
     if clear.clicked() {
         app.ui.search.clear();
         let _ = app.run("library.clearFilter", json!({}));
     }
     // filter presets: apply one, save the current filter, delete
-    let presets = crate::widgets::dropdown(ui, "filterPresets", crate::i18n::tr("Presets"), t.font(12.5), t.text);
+    let presets = crate::widgets::dropdown(ui, "filterPresets", crate::i18n::tr("Presets"), t.font(11.5), t.text);
     register(ui, "button:filterPresets", presets.rect);
     egui::Popup::menu(&presets).show(|ui| {
         let names: Vec<String> = app.session.filter_presets.iter().map(|f| f.name.clone()).collect();

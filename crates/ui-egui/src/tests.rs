@@ -60,6 +60,7 @@ mod menubar;
 mod merge_preview;
 mod missing_sweep;
 mod model_setup;
+mod modules;
 mod move_folder;
 mod offline;
 mod open_lightroom;

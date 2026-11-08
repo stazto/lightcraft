@@ -164,13 +164,13 @@ impl Default for Tokens {
             reject: Color32::from_rgb(0xe0, 0x4a, 0x4a),
             caution: Color32::from_rgb(0xe3, 0xa8, 0x3c),
             mask_overlay: Color32::from_rgba_unmultiplied(0xe0, 0x20, 0x30, 110),
-            top_bar_h: 42.0,
-            bottom_bar_h: 48.0,
+            top_bar_h: 38.0,
+            bottom_bar_h: 40.0,
             panel_w: 270.0,
-            strip_w: 48.0,
-            slider_row_h: 45.0,
-            section_h: 57.0,
-            film_h: 142.0,
+            strip_w: 44.0,
+            slider_row_h: 38.0,
+            section_h: 46.0,
+            film_h: 120.0,
         }
     }
 }
@@ -442,8 +442,8 @@ pub fn apply_kind(ctx: &egui::Context, kind: ThemeKind) {
     v.extreme_bg_color = t.field;
     v.faint_bg_color = t.inset;
     v.window_stroke = Stroke::new(1.0, t.button_border);
-    v.window_corner_radius = CornerRadius::same(6);
-    v.menu_corner_radius = CornerRadius::same(6);
+    v.window_corner_radius = CornerRadius::same(10);
+    v.menu_corner_radius = CornerRadius::same(8);
     v.selection.bg_fill = t.accent.gamma_multiply(0.6);
     v.selection.stroke = Stroke::new(1.0, t.accent);
     v.override_text_color = Some(t.text_label);
@@ -453,7 +453,7 @@ pub fn apply_kind(ctx: &egui::Context, kind: ThemeKind) {
     let w = &mut v.widgets;
     craft_ui::theme::WidgetPalette { noninteractive: t.chrome, inactive: t.button, hovered: t.hover, active: t.pressed, open: t.hover }.apply_to(
         w,
-        CornerRadius::same(4),
+        CornerRadius::same(6),
         Stroke::new(1.0, t.text_label),
     );
     w.noninteractive.bg_stroke = Stroke::new(1.0, t.divider);
@@ -462,13 +462,13 @@ pub fn apply_kind(ctx: &egui::Context, kind: ThemeKind) {
     ctx.set_visuals_of(egui::Theme::Light, v);
     ctx.set_theme(if dark { egui::Theme::Dark } else { egui::Theme::Light });
     ctx.all_styles_mut(|s| {
-        s.spacing.item_spacing = egui::vec2(6.0, 4.0);
-        s.spacing.button_padding = egui::vec2(8.0, 3.0);
-        s.spacing.interact_size.y = 22.0;
-        s.text_styles.insert(egui::TextStyle::Body, FontId::proportional(13.0));
-        s.text_styles.insert(egui::TextStyle::Button, FontId::proportional(13.0));
-        s.text_styles.insert(egui::TextStyle::Small, FontId::proportional(11.0));
-        s.text_styles.insert(egui::TextStyle::Heading, FontId::new(16.0, FontFamily::Name(FONT_SEMIBOLD.into())));
+        s.spacing.item_spacing = egui::vec2(5.0, 3.0);
+        s.spacing.button_padding = egui::vec2(7.0, 2.0);
+        s.spacing.interact_size.y = 20.0;
+        s.text_styles.insert(egui::TextStyle::Body, FontId::proportional(12.0));
+        s.text_styles.insert(egui::TextStyle::Button, FontId::proportional(12.0));
+        s.text_styles.insert(egui::TextStyle::Small, FontId::proportional(10.5));
+        s.text_styles.insert(egui::TextStyle::Heading, FontId::new(14.0, FontFamily::Name(FONT_SEMIBOLD.into())));
         s.animation_time = 0.08;
     });
 }

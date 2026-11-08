@@ -142,7 +142,7 @@ fn catalogs_agree_on_placeholders() {
 #[test]
 fn startup_failure_message_names_the_error_and_the_log() {
     let (title, text) = startup_failed_message("no adapter", Some("/home/a/.config/lightcraft/logs/lightcraft.log"));
-    assert_eq!(title, "LightCraft could not start");
+    assert_eq!(title, "Lightspot could not start");
     assert!(text.contains("no adapter") && text.ends_with("lightcraft.log"), "{text}");
     assert!(!startup_failed_message("no adapter", None).1.contains("log file"));
 }
@@ -454,7 +454,7 @@ fn ukrainian_panels_dialogs_and_letters_paint_with_bundled_fonts() {
     app.ui.left_panel = true;
     let text = painted_text(&ctx, &mut app, Locale::Uk);
     assert!(text.contains(Locale::Uk.tr("My Photos")) && text.contains(Locale::Uk.tr("All Photos")), "{text}");
-    for (command, title) in [("app.about", "About LightCraft"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
+    for (command, title) in [("app.about", "About Lightspot"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
         app.ui.dialog = None;
         app.run(command, serde_json::json!({})).unwrap();
         let text = painted_text(&ctx, &mut app, Locale::Uk);
@@ -481,7 +481,7 @@ fn italian_panels_dialogs_and_letters_paint_with_bundled_fonts() {
     app.ui.left_panel = true;
     let text = painted_text(&ctx, &mut app, Locale::It);
     assert!(text.contains(Locale::It.tr("My Photos")) && text.contains(Locale::It.tr("All Photos")), "{text}");
-    for (command, title) in [("app.about", "About LightCraft"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
+    for (command, title) in [("app.about", "About Lightspot"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
         app.ui.dialog = None;
         app.run(command, serde_json::json!({})).unwrap();
         let text = painted_text(&ctx, &mut app, Locale::It);
@@ -508,7 +508,7 @@ fn finnish_panels_dialogs_and_letters_paint_with_bundled_fonts() {
     app.ui.left_panel = true;
     let text = painted_text(&ctx, &mut app, Locale::Fi);
     assert!(text.contains(Locale::Fi.tr("My Photos")) && text.contains(Locale::Fi.tr("All Photos")), "{text}");
-    for (command, title) in [("app.about", "About LightCraft"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
+    for (command, title) in [("app.about", "About Lightspot"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
         app.ui.dialog = None;
         app.run(command, serde_json::json!({})).unwrap();
         let text = painted_text(&ctx, &mut app, Locale::Fi);
@@ -623,7 +623,7 @@ fn german_panels_dialogs_and_glyphs_are_painted_without_extra_fonts() {
     app.ui.view = crate::state::ViewMode::People;
     let text = painted_text(&ctx, &mut app, Locale::De);
     assert!(text.contains(Locale::De.tr("Named People")), "{text}");
-    for (command, title) in [("app.about", "About LightCraft"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
+    for (command, title) in [("app.about", "About Lightspot"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
         app.ui.dialog = None;
         app.run(command, serde_json::json!({})).unwrap();
         let text = painted_text(&ctx, &mut app, Locale::De);
@@ -799,7 +799,7 @@ fn the_ui_works_without_craft_fonts() {
         // replacement-glyph face, which there is Hack, the face that draws Latin.)
         for family in [egui::FontFamily::Proportional, egui::FontFamily::Name(crate::theme::FONT_SEMIBOLD.into())] {
             let font = egui::FontId::new(13.0, family);
-            assert!("LightCraft".chars().all(|ch| fonts.has_glyph(&font, ch)), "{font:?}");
+            assert!("Lightspot".chars().all(|ch| fonts.has_glyph(&font, ch)), "{font:?}");
         }
     });
     let mut app = crate::LightcraftApp::new(lightcraft_engine::Session::with_demo(), Default::default());
@@ -919,7 +919,7 @@ fn vietnamese_panels_dialogs_and_diacritics_paint_with_bundled_fonts() {
     app.ui.left_panel = true;
     let text = painted_text(&ctx, &mut app, Locale::Vi);
     assert!(text.contains(Locale::Vi.tr("My Photos")) && text.contains(Locale::Vi.tr("All Photos")), "{text}");
-    for (command, title) in [("app.about", "About LightCraft"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
+    for (command, title) in [("app.about", "About Lightspot"), ("app.shortcuts", "Keyboard Shortcuts"), ("app.settings", "Settings")] {
         app.ui.dialog = None;
         app.run(command, serde_json::json!({})).unwrap();
         let text = painted_text(&ctx, &mut app, Locale::Vi);

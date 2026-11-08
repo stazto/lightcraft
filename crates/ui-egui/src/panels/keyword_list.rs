@@ -134,7 +134,7 @@ pub fn drag_feedback(app: &mut LightcraftApp, ctx: &egui::Context) {
         ctx,
         |ui| {
             egui::Frame::NONE.fill(t.accent).corner_radius(10.0).inner_margin(egui::Margin::symmetric(9, 3)).show(ui, |ui| {
-                ui.label(egui::RichText::new(name).color(Color32::WHITE).font(t.semibold(12.0)));
+                ui.label(egui::RichText::new(name).color(Color32::WHITE).font(t.semibold(11.0)));
             });
         },
     );
@@ -255,7 +255,7 @@ fn row(app: &mut LightcraftApp, ui: &mut egui::Ui, r: &Row, selection: &[PhotoId
         let _ = app.run("photo.setMeta", json!({key: [r.path]}));
     }
     // the count, then the arrow left of it (shown on hover)
-    let count = ui.painter().layout_no_wrap(r.count.to_string(), t.font(12.0), t.text_dim);
+    let count = ui.painter().layout_no_wrap(r.count.to_string(), t.font(11.0), t.text_dim);
     let count_rect = Rect::from_min_size(pos2(inner.right() - 6.0 - count.size().x, cy - count.size().y / 2.0), count.size());
     register(ui, format!("keywordCount:{}", r.path), count_rect);
     ui.painter().galley(count_rect.min, count, t.text_dim);
@@ -273,7 +273,7 @@ fn row(app: &mut LightcraftApp, ui: &mut egui::Ui, r: &Row, selection: &[PhotoId
     // the name, cut short before the arrow, leaving room for the dot and the + that follow it
     let is_default = app.session.catalog.default_keyword_parent().as_deref().is_some_and(|k| same(k, &r.path));
     let in_shortcut = app.session.catalog.keyword_info(&r.path).is_some_and(|i| i.keyword_shortcut);
-    let font = t.font(13.0);
+    let font = t.font(12.0);
     let measure = |s: &str| ui.painter().layout_no_wrap(s.to_string(), font.clone(), t.text_label).size().x;
     let marks = if is_default { 10.0 } else { 0.0 } + if in_shortcut { 5.0 + measure("+") } else { 0.0 };
     let room = (arrow.left() - 4.0 - (x + 34.0) - marks).max(0.0);

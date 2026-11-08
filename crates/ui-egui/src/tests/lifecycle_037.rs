@@ -2213,6 +2213,7 @@ fn a_system_paste_under_a_new_barrier_is_refused() {
     let mut h = Headless::new(app(), [1200.0, 760.0], 1.0);
     let t = Duration::from_secs(20);
     h.settle(Duration::from_secs(60));
+    h.request("ui.set", serde_json::json!({"filterBar": true, "view": "photoGrid"}), t);
     let r = h.request("ui.clickWidget", serde_json::json!({"id": "field:search"}), t);
     assert_eq!(r["ok"], true, "{r}");
     h.view.clipboard = "blocked".into();

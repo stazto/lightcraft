@@ -68,7 +68,7 @@ pub(crate) fn filmstrip(app: &mut LightcraftApp, ui: &mut egui::Ui, r: Rect) {
         // a label, not painted text, so a screen reader reads the reason; the region keeps the strip navigable
         let mut empty = ui.new_child(egui::UiBuilder::new().max_rect(r).layout(egui::Layout::centered_and_justified(egui::Direction::TopDown)));
         crate::widgets::announce_region(&empty, egui::accesskit::Role::Region, crate::i18n::tr("Filmstrip"));
-        empty.add(egui::Label::new(egui::RichText::new(why).font(t.font(12.5)).color(t.text_dim)).selectable(false));
+        empty.add(egui::Label::new(egui::RichText::new(why).font(t.font(11.5)).color(t.text_dim)).selectable(false));
         return;
     }
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(r.shrink2(vec2(0.0, 4.0))));
@@ -124,7 +124,7 @@ pub(crate) fn filmstrip(app: &mut LightcraftApp, ui: &mut egui::Ui, r: Rect) {
             if thumb.is_none() {
                 p.rect_filled(img_area, 0.0, t.skeleton);
                 if failed {
-                    p.text(img_area.center(), Align2::CENTER_CENTER, "!", t.semibold(14.0), t.text);
+                    p.text(img_area.center(), Align2::CENTER_CENTER, "!", t.semibold(13.0), t.text);
                 }
             }
             if let Some(tex) = thumb {

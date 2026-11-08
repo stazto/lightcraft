@@ -188,11 +188,11 @@ fn draw_row(app: &mut LightcraftApp, ui: &mut egui::Ui, row: Row) -> egui::Respo
         icon,
         if selected { t.text } else { t.icon },
     );
-    let font = t.font(13.5);
+    let font = t.font(12.5);
     let color = if selected { t.text } else { t.text_label };
     // a count of nothing is there, but fainter: the rows that hold photos stand out
     let count_color = |n: usize| if n == 0 { t.text_dim.gamma_multiply(0.55) } else { t.text_dim };
-    let count_galley = count.filter(|_| app.ui.show_counts).map(|n| ui.painter().layout_no_wrap(n.to_string(), t.font(12.5), count_color(n)));
+    let count_galley = count.filter(|_| app.ui.show_counts).map(|n| ui.painter().layout_no_wrap(n.to_string(), t.font(11.5), count_color(n)));
     let label_left = r.left() + 42.0 + indent;
     let measure = |s: &str| ui.painter().layout_no_wrap(s.to_string(), font.clone(), color).size().x;
     let full_w = measure(label);
@@ -242,8 +242,8 @@ pub(super) fn out_of_sight(app: &LightcraftApp, ui: &mut egui::Ui, id: &str, lab
     let indent = drawn_indent(ui, indent);
     let t = Tokens::get(ui.ctx());
     let painter = ui.painter();
-    let name_w = painter.layout_no_wrap(label.to_string(), t.font(13.5), t.text_label).size().x;
-    let count_w = count.filter(|_| app.ui.show_counts).map(|n| painter.layout_no_wrap(n.to_string(), t.font(12.5), t.text_dim).size().x);
+    let name_w = painter.layout_no_wrap(label.to_string(), t.font(12.5), t.text_label).size().x;
+    let count_w = count.filter(|_| app.ui.show_counts).map(|n| painter.layout_no_wrap(n.to_string(), t.font(11.5), t.text_dim).size().x);
     let mark_w = if mark { MARK_W } else { 0.0 };
     let mut needed = row_need(indent, name_w, mark_w, count_w);
     // a row that drawn would keep its count past the edge asks for the same width as when drawn

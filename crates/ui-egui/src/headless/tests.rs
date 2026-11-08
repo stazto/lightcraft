@@ -295,6 +295,7 @@ fn agents_cut_copy_and_paste_in_text_fields() {
         r
     };
     h.settle(SETTLE);
+    ask(&mut h, "ui.set", json!({"filterBar": true}));
     ask(&mut h, "ui.clickWidget", json!({"id": "field:search"}));
     ask(&mut h, "ui.text", json!({"text": "wedding"}));
     ask(&mut h, "ui.key", json!({"key": "a", "cmd": true}));
@@ -458,6 +459,8 @@ fn the_search_field_pastes_from_its_menu() {
     let t = Duration::from_secs(10);
     h.settle(SETTLE);
     h.view.clipboard = "wedding".into();
+    h.request("ui.set", json!({"filterBar": true}), t);
+    h.settle(SETTLE);
     for (id, button) in [("field:search", "right"), ("field:search:paste", "left")] {
         let r = h.request("ui.clickWidget", json!({"id": id, "button": button}), t);
         assert_eq!(r["ok"], true, "{id}: {r}");
@@ -473,6 +476,8 @@ fn the_search_field_pastes_from_its_menu() {
 fn clearing_the_loupe_filters_empties_the_search_field() {
     let mut h = demo([1200.0, 760.0]);
     let t = Duration::from_secs(10);
+    h.settle(SETTLE);
+    h.request("ui.set", json!({"filterBar": true}), t);
     h.settle(SETTLE);
     for (method, params) in [("ui.clickWidget", json!({"id": "field:search"})), ("ui.text", json!({"text": "a"}))] {
         let r = h.request(method, params, t);
@@ -494,6 +499,8 @@ fn clearing_the_loupe_filters_empties_the_search_field() {
 fn escape_in_the_search_field_gives_back_the_search() {
     let mut h = demo([1200.0, 760.0]);
     let t = Duration::from_secs(10);
+    h.settle(SETTLE);
+    h.request("ui.set", json!({"filterBar": true}), t);
     h.settle(SETTLE);
     for (method, params) in [("ui.clickWidget", json!({"id": "field:search"})), ("ui.text", json!({"text": "travel"}))] {
         let r = h.request(method, params, t);
@@ -657,7 +664,7 @@ fn naming_a_face_in_the_loupe() {
 }
 
 /// Adding a face model: the dialog shows the file's terms, the model is installed only once they are
-/// accepted, and a file LightCraft cannot use only says why.
+/// accepted, and a file Lightspot cannot use only says why.
 #[test]
 fn adding_a_face_model_shows_its_terms_and_installs_only_once_accepted() {
     use crate::state::Dialog;
@@ -1045,8 +1052,11 @@ fn person_more_confirms_all_above_with_one_undo_step() {
     h.request("ui.key", json!({"key": "a"}), t);
     h.step();
     assert_eq!(names(&h)[1], None);
-    // Text editing owns A even if a face was the last pointer target.
-    let search = h.request("ui.clickWidget", json!({"id": "field:search"}), t);
+    // Text editing owns A even if a face was the last pointer target (the Keywords panel's
+    // field: it opens beside the page, which stays).
+    h.request("engine.execute", json!({"command": "panel.keywords"}), t);
+    h.step();
+    let search = h.request("ui.clickWidget", json!({"id": "field:keyword"}), t);
     assert_eq!(search["ok"], true, "{search}");
     h.step();
     h.request("ui.key", json!({"key": "a"}), t);
@@ -1054,6 +1064,8 @@ fn person_more_confirms_all_above_with_one_undo_step() {
     assert_eq!(names(&h)[1], None);
     h.request("ui.key", json!({"key": "escape"}), t);
     h.step();
+    h.request("engine.execute", json!({"command": "panel.keywords"}), t);
+    set_page(&mut h);
     // Hovering a tile is enough for the A key, without clicking or moving keyboard focus there.
     let tile_id = format!("more-face:{}:0", ids[2].0);
     let rect = h.app.widgets.iter().find(|(id, _)| id == &tile_id).unwrap().1;
@@ -1891,7 +1903,7 @@ fn export_dialog_previews_the_watermark() {
     h.settle(SETTLE);
     assert!(preview(&mut h).is_none(), "no preview without a watermark");
     if let Some(crate::state::Dialog::Export { opts, .. }) = &mut h.app.ui.dialog {
-        opts.watermark = Some(lightcraft_engine::export::Watermark { text: "© LightCraft".into(), ..Default::default() });
+        opts.watermark = Some(lightcraft_engine::export::Watermark { text: "© Lightspot".into(), ..Default::default() });
     }
     let t0 = Instant::now();
     while preview(&mut h).is_none() && t0.elapsed() < Duration::from_secs(30) {
@@ -3225,7 +3237,7 @@ fn return_commits_the_crop_tool() {
     assert_eq!(h.app.ui.right, crate::state::RightPanel::Edit, "no-op outside tools");
 }
 
-/// ⌘Q (File → Quit LightCraft) closes the window.
+/// ⌘Q (File → Quit Lightspot) closes the window.
 #[test]
 fn cmd_q_quits() {
     let mut h = demo([900.0, 600.0]);

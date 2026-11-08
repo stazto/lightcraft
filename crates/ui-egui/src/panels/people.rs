@@ -66,20 +66,20 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let people = app.caches.people(&app.session.catalog, &app.session.filter);
     let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), HEADER_H), Sense::hover());
     let title =
-        ui.painter().text(pos2(head.left() + PAD, head.center().y), Align2::LEFT_CENTER, crate::i18n::tr("Named People"), t.semibold(15.0), t.text);
+        ui.painter().text(pos2(head.left() + PAD, head.center().y), Align2::LEFT_CENTER, crate::i18n::tr("Named People"), t.semibold(14.0), t.text);
     // the person page last left (a face opened from it, or its back button): one click returns to it
     if let Some(last) = app.ui.last_person.clone().filter(|n| people.iter().any(|p| &p.name == n)) {
-        let label = fit(ui.painter(), &last, t.font(13.0), 224.0);
-        let width = ui.painter().layout_no_wrap(label.clone(), t.font(13.0), Color32::WHITE).size().x + 44.0;
+        let label = fit(ui.painter(), &last, t.font(12.0), 224.0);
+        let width = ui.painter().layout_no_wrap(label.clone(), t.font(12.0), Color32::WHITE).size().x + 44.0;
         let r = Rect::from_min_size(pos2(title.right() + 14.0, head.center().y - 12.0), vec2(width, 24.0));
         let mut child = ui.new_child(egui::UiBuilder::new().max_rect(r));
-        let b = crate::widgets::arrow_button(&mut child, RichText::new(label).font(t.font(13.0)), crate::icons::Icon::ChevronRight, false);
+        let b = crate::widgets::arrow_button(&mut child, RichText::new(label).font(t.font(12.0)), crate::icons::Icon::ChevronRight, false);
         register(ui, "people:last", b.rect);
         if b.on_hover_text(crate::i18n::tr("Back to this person")).clicked() {
             let _ = app.run("view.person", json!({"name": last}));
         }
     }
-    ui.painter().text(pos2(head.right() - PAD, head.center().y), Align2::RIGHT_CENTER, people.len().to_string(), t.font(13.0), t.text_dim);
+    ui.painter().text(pos2(head.right() - PAD, head.center().y), Align2::RIGHT_CENTER, people.len().to_string(), t.font(12.0), t.text_dim);
     // until face recognition is set up: what it takes, and a button that does the next step
     super::faces::setup_banner(app, ui);
     // the filters narrowing the list (a date, a keyword…), removable here
@@ -120,7 +120,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
                 pos2(area.left() + PAD, area.top() + 24.0),
                 Align2::LEFT_CENTER,
                 "No named people yet. Name the faces below to start.",
-                t.font(13.0),
+                t.font(12.0),
                 t.text_dim,
             );
         }
@@ -178,7 +178,7 @@ fn card(app: &mut LightcraftApp, ui: &mut egui::Ui, person: &Person, r: Rect, ed
         p.image(tex.tex.id(), face, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
     }
     // how many photos they are in, on the picture
-    let g = p.layout_no_wrap(badge_count(person.count), t.font(11.5), Color32::WHITE);
+    let g = p.layout_no_wrap(badge_count(person.count), t.font(11.0), Color32::WHITE);
     let pill = Rect::from_min_size(
         pos2((face.right() - g.size().x - 14.0).max(face.left() + 2.0), face.bottom() - g.size().y - 11.0),
         g.size() + vec2(10.0, 6.0),
@@ -191,8 +191,8 @@ fn card(app: &mut LightcraftApp, ui: &mut egui::Ui, person: &Person, r: Rect, ed
         p.rect_stroke(face, 3.0, Stroke::new(1.0, t.text_dim), StrokeKind::Outside);
     }
     // a long name must not run past the card
-    let name = fit(p, &person.name, t.semibold(13.0), edge);
-    p.text(pos2(r.left() + 2.0, face.bottom() + 14.0), Align2::LEFT_CENTER, name, t.semibold(13.0), t.text);
+    let name = fit(p, &person.name, t.semibold(12.0), edge);
+    p.text(pos2(r.left() + 2.0, face.bottom() + 14.0), Align2::LEFT_CENTER, name, t.semibold(12.0), t.text);
     let resp = resp.on_hover_text(crate::i18n::tr_format!("{} — show their photos", person.name));
     let full = person.name.clone();
     crate::widgets::context_menu(&resp, |ui| {

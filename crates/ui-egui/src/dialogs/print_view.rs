@@ -69,7 +69,7 @@ fn patch(app: &mut LightcraftApp, ctx: &egui::Context, params: Value) {
 
 fn heading(ui: &mut Ui, t: &Tokens, text: &str) {
     ui.add_space(8.0);
-    ui.label(egui::RichText::new(crate::i18n::tr(text)).font(t.semibold(12.0)).color(t.text));
+    ui.label(egui::RichText::new(crate::i18n::tr(text)).font(t.semibold(11.0)).color(t.text));
     ui.add_space(2.0);
 }
 
@@ -612,7 +612,7 @@ fn preview(app: &mut LightcraftApp, ui: &mut Ui, t: &Tokens, pu: &mut PrintUi, s
     let painter = ui.painter_at(area);
     painter.rect_filled(area, 4.0, t.canvas);
     let Ok((pw, ph)) = st.layout.page_size() else {
-        painter.text(area.center(), Align2::CENTER_CENTER, crate::i18n::tr("This page setup is not valid"), t.font(13.0), t.caution);
+        painter.text(area.center(), Align2::CENTER_CENTER, crate::i18n::tr("This page setup is not valid"), t.font(12.0), t.caution);
         return;
     };
     let g = &st.guides;

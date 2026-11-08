@@ -1,5 +1,5 @@
 //! Preview-only raws rechecked when a library opens (issue #662): a raw imported while its format
-//! couldn't be decoded is probed again when the library opens in another LightCraft version (see
+//! couldn't be decoded is probed again when the library opens in another Lightspot version (see
 //! `lightcraft_engine::cmd::recheck`). The probe runs on a worker thread, so opening never waits
 //! for it; the result is applied back here, unless another library was opened meanwhile.
 

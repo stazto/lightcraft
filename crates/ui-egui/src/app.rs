@@ -6,7 +6,7 @@ use super::{
     MAX_PENDING_SHOTS, MAX_SHOT_BYTES, MAX_SHOT_TOTAL_BYTES, MAX_TEXTURE_SIDE, PendingGesture, PendingShot, Perf, Receiver, SCREEN_PROFILE,
     SCREENSHOT_FALLBACK_MS, SCREENSHOT_SETTLE_MS, SHOT_FORCE_BUSY_MS, SHOT_SETTLE_FRAMES, SHOT_SETTLE_MS, Sender, Session, ShotGeometry,
     TOAST_SECONDS, UiState, Value, docking, drop_overlay, export_task, focus_scan, frame_rate, headless, i18n, import, lightroom_import, menus,
-    merge, model_setup, panels, pick, recheck, render, shortcuts, slideshow_export, state, sync, tasks, theme, updates_ui, widgets,
+    merge, model_setup, panels, pick, recheck, render, shortcuts, slideshow_export, state, sync, tasks, theme, widgets,
 };
 
 mod control;
@@ -41,7 +41,6 @@ impl LightcraftApp {
             text_focus: false,
             headless_host: false,
             notices: vec![],
-            updates_rt: Default::default(),
             quit_prompt: None,
             notice_input: Default::default(),
             quit_confirmed: false,
@@ -436,7 +435,7 @@ impl LightcraftApp {
                 let t = self.tick_now();
                 self.ui.toast = Some((
                     crate::i18n::tr_format!(
-                        "{n} change{} saved in memory but not written to disk: {e} — LightCraft will retry",
+                        "{n} change{} saved in memory but not written to disk: {e} — Lightspot will retry",
                         if n == 1 { "" } else { "s" },
                         n = n,
                         e = e

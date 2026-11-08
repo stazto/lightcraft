@@ -76,7 +76,7 @@ fn a_catalog_original_that_is_not_a_photo_file_is_not_imported() {
     assert_eq!(r["photos"], 2, "only the real master and its copy: {r}");
     assert!(s.catalog.photos().all(|p| !matches!(&p.source, Source::File { path } if path.ends_with(".exe"))), "the program was catalogued");
     let warnings = r["warnings"].to_string();
-    assert!(warnings.contains("payload.exe") && warnings.contains("file types LightCraft reads"), "{warnings}");
+    assert!(warnings.contains("payload.exe") && warnings.contains("file types Lightspot reads"), "{warnings}");
     assert!(warnings.contains("image 4: not imported"), "the virtual copy of the refused original goes with it: {warnings}");
 }
 

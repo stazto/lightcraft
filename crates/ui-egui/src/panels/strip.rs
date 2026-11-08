@@ -10,7 +10,7 @@ use crate::theme::Tokens;
 use crate::widgets::icon_button;
 
 /// Height of one tool button.
-const BUTTON_H: f32 = 40.0;
+const BUTTON_H: f32 = 36.0;
 /// Space between tool buttons.
 const GAP: f32 = 6.0;
 

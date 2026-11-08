@@ -165,7 +165,7 @@ fn note(p: &egui::Painter, why: &str) {
     let lines = [crate::i18n::tr("The layout image can't be shown"), why];
     let mut y = canvas.bottom() - 14.0;
     for (i, l) in lines.iter().enumerate().rev() {
-        let font = if i == 0 { t.semibold(13.0) } else { t.font(12.0) };
+        let font = if i == 0 { t.semibold(12.0) } else { t.font(11.0) };
         let g = p.layout_no_wrap(l.to_string(), font, Color32::WHITE);
         y -= g.size().y;
         let at = pos2(canvas.left() + 14.0, y);

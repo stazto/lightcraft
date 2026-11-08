@@ -30,9 +30,8 @@ pub fn gpu_notice(reason: Option<&str>, enabled: bool) -> Option<String> {
     if !enabled || !reason?.starts_with("no GPU adapter") {
         return None;
     }
-    let mut text =
-        crate::i18n::tr("No graphics processor found: LightCraft renders on the CPU, which is much slower. Details in Help → System Info.")
-            .to_string();
+    let mut text = crate::i18n::tr("No graphics processor found: Lightspot renders on the CPU, which is much slower. Details in Help → System Info.")
+        .to_string();
     if cfg!(target_os = "linux") {
         text.push(' ');
         text.push_str(crate::i18n::tr("On NixOS, start it from `nix develop`."));

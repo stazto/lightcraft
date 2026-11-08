@@ -94,7 +94,7 @@ fn the_list_checks_each_library_and_selects_the_last_one() {
     let (gone, plain, file) =
         (dir.join("Gone").to_string_lossy().into_owned(), plain.to_string_lossy().into_owned(), file.to_string_lossy().into_owned());
     // another program has it open: listing doesn't take locks, so it is found when opened
-    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held_path), "another LightCraft").unwrap();
+    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held_path), "another Lightspot").unwrap();
 
     let mut settings = AppSettings {
         recent_libraries: vec![gone.clone(), held_path.clone(), a.clone(), plain.clone(), file.clone(), b.clone()],
@@ -109,7 +109,7 @@ fn the_list_checks_each_library_and_selects_the_last_one() {
     assert!(why[0].unwrap().contains("Not found"), "{why:?}");
     assert_eq!(why[1], None, "a lock is not probed: {why:?}");
     assert_eq!(why[2], None);
-    assert!(why[3].unwrap().contains("no LightCraft library"), "{why:?}");
+    assert!(why[3].unwrap().contains("no Lightspot library"), "{why:?}");
     assert!(why[4].unwrap().contains("not a library folder"), "{why:?}");
     assert_eq!(why[5], None);
     assert_eq!(c.selected, Some(5), "the last library opened");
@@ -177,7 +177,7 @@ fn listing_the_libraries_leaves_every_folder_byte_identical() {
         let _ = std::fs::remove_file(fresh.join(f));
     }
     std::fs::create_dir_all(dir.join("Plain")).unwrap();
-    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held_path), "another LightCraft").unwrap();
+    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held_path), "another Lightspot").unwrap();
     let recent = vec![free.clone(), fresh_path.clone(), held_path.clone(), dir.join("Plain").to_string_lossy().into_owned()];
     let before = snapshot(&dir);
     // (mtime granularity: a write in the same instant would still change contents or add files)
@@ -270,12 +270,12 @@ fn return_opens_the_selected_library_and_a_failure_says_why() {
     let mut h = asking(vec![a.clone(), b.clone()], &b, None);
     assert_eq!(h.app.library_problem.as_ref().unwrap().chooser.as_ref().unwrap().selected, Some(1));
     // another program takes Beta after the window opened: Open says so and keeps the window
-    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&b), "another LightCraft").unwrap();
+    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&b), "another Lightspot").unwrap();
     h.request("ui.key", json!({"key": "Enter"}), T);
     settle(&mut h);
     assert!(h.app.session.library.is_none());
     let p = h.app.library_problem.as_ref().unwrap();
-    assert!(p.error.contains("already open in another LightCraft"), "who has it: {}", p.error);
+    assert!(p.error.contains("already open in another Lightspot"), "who has it: {}", p.error);
     assert!(p.chooser.as_ref().unwrap().libraries[1].unavailable.is_some(), "greyed out now");
     drop(lock);
     // ↑ to Alpha, Return: it opens
@@ -826,7 +826,7 @@ fn a_failed_open_or_an_unreadable_catalog_doesnt_mark_a_library_missing() {
     assert!(h.step_until(T, answered));
     assert_eq!(h.app.recent_checks.exists(&held), Some(true));
     // another program has it: Open from the launch window fails
-    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held), "another LightCraft").unwrap();
+    let lock = lightcraft_catalog::LibraryLock::acquire(Path::new(&held), "another Lightspot").unwrap();
     settle(&mut h);
     let r = h.request("ui.clickWidget", json!({"id": "button:libraryOpen"}), T);
     assert_eq!(r["ok"], true, "{r} {:?}", h.app.widgets.iter().map(|(w, _)| w.clone()).filter(|w| w.contains("library")).collect::<Vec<_>>());
@@ -1052,7 +1052,7 @@ fn try_again_on_a_missing_remembered_library_makes_nothing_in_an_empty_folder() 
     assert_eq!(std::fs::read_dir(&mount).unwrap().count(), 0, "nothing is written there");
     assert!(h.app.session.library.is_none());
     let p = h.app.library_problem.as_ref().expect("the window stays");
-    assert_eq!(p.error, "There is no LightCraft library in this folder any more.");
+    assert_eq!(p.error, "There is no Lightspot library in this folder any more.");
     assert!(has(&h, "button:libraryRetry"));
     // the share is connected again: Try Again opens the library in it
     make_library(&mount);
@@ -1080,7 +1080,7 @@ fn try_again_says_why_the_remembered_library_is_missing_in_the_interface_languag
     assert_eq!(h.request("ui.clickWidget", json!({"id": "button:libraryRetry"}), T)["ok"], true);
     settle(&mut h);
     let error = h.app.library_problem.as_ref().map(|p| p.error.clone()).unwrap_or_default();
-    assert_eq!(error, "In diesem Ordner ist keine LightCraft-Bibliothek mehr.");
+    assert_eq!(error, "In diesem Ordner ist keine Lightspot-Bibliothek mehr.");
     std::fs::remove_dir(&mount).unwrap();
     assert_eq!(h.request("ui.clickWidget", json!({"id": "button:libraryRetry"}), T)["ok"], true);
     settle(&mut h);

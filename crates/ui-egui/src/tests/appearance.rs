@@ -32,7 +32,7 @@ fn new_users_keep_the_dark_look_and_old_settings_load_unchanged() {
     assert_eq!(old.settings.dark_theme, DarkTheme::Charcoal);
     assert_eq!(old.settings.light_theme, LightTheme::Silver);
     assert_eq!(old.settings.startup_view, crate::state::StartupView::Detail);
-    // and the Charcoal tokens are the ones LightCraft always had
+    // and the Charcoal tokens are the ones Lightspot always had
     assert_eq!(crate::theme::Tokens::for_kind(ThemeKind::Charcoal).chrome, crate::theme::Tokens::default().chrome);
 }
 

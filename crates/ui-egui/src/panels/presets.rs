@@ -89,7 +89,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     egui::Frame::NONE.fill(t.chrome).stroke(egui::Stroke::new(1.0, t.divider)).show(ui, |ui| {
         ui.spacing_mut().item_spacing.y = 0.0;
         let (hr, _) = ui.allocate_exact_size(vec2(ui.available_width(), 46.0), Sense::hover());
-        ui.painter().text(pos2(hr.left() + 24.0, hr.center().y + 2.0), Align2::LEFT_CENTER, crate::i18n::tr("Presets"), t.semibold(15.0), t.text);
+        ui.painter().text(pos2(hr.left() + 24.0, hr.center().y + 2.0), Align2::LEFT_CENTER, crate::i18n::tr("Presets"), t.semibold(14.0), t.text);
         let mut hdr = ui.new_child(
             egui::UiBuilder::new()
                 .max_rect(Rect::from_min_max(pos2(hr.right() - 80.0, hr.top()), hr.right_bottom()))
@@ -186,7 +186,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
                     pos2(r.left() + 36.0, r.center().y),
                     Align2::LEFT_CENTER,
                     crate::i18n::builtin_label(&g, builtin),
-                    t.semibold(13.0),
+                    t.semibold(12.0),
                     t.text_label,
                 );
                 if resp.clicked() {
@@ -232,7 +232,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
                         }
                         text_x = tr.right() + 10.0;
                     }
-                    ui.painter().text(pos2(text_x, r.center().y), Align2::LEFT_CENTER, &name, t.font(13.0), t.text_label);
+                    ui.painter().text(pos2(text_x, r.center().y), Align2::LEFT_CENTER, &name, t.font(12.0), t.text_label);
                     if fav {
                         crate::rating::paint_star(
                             ui.painter(),

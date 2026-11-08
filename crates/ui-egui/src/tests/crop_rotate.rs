@@ -428,7 +428,8 @@ fn rotating_the_crop_dims_nothing_inside_the_box() {
         }
     }
     assert!(checked >= 12, "{checked} points inside the box compared");
-    let corner_px = img.left_top() + egui::vec2(6.0, 6.0);
+    // 20 points in: the synthetic photo fades to black at its very corner, where dimming shows nothing
+    let corner_px = img.left_top() + egui::vec2(20.0, 20.0);
     let lum = |c: egui::Color32| u32::from(c.r()) + u32::from(c.g()) + u32::from(c.b());
     assert!(lum(pixel(&rotated, corner_px)) < lum(pixel(&plain, corner_px)), "the photo's corner, outside the box, is dimmed");
 }

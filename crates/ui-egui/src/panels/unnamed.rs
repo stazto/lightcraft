@@ -187,8 +187,8 @@ pub fn section_header(app: &mut LightcraftApp, ui: &mut egui::Ui, list: &Unnamed
     let t = Tokens::get(ui.ctx());
     let count = if list.total > list.faces.len() { format!("{} of {}", list.faces.len(), list.total) } else { list.total.to_string() };
     let p = ui.painter();
-    p.text(at, Align2::LEFT_CENTER, "Unnamed faces", t.semibold(15.0), t.text);
-    p.text(pos2(right, at.y), Align2::RIGHT_CENTER, count, t.font(13.0), t.text_dim);
+    p.text(at, Align2::LEFT_CENTER, "Unnamed faces", t.semibold(14.0), t.text);
+    p.text(pos2(right, at.y), Align2::RIGHT_CENTER, count, t.font(12.0), t.text_dim);
     let sub = if !list.ready && list.faces.is_empty() {
         "Turn on face recognition in Settings to find the faces in your photos.".to_string()
     } else if list.faces.is_empty() && app.caches.faces_pending > 0 {
@@ -200,7 +200,7 @@ pub fn section_header(app: &mut LightcraftApp, ui: &mut egui::Ui, list: &Unnamed
     } else {
         "Click faces to select them, Shift-click for a range, then type a name.".to_string()
     };
-    p.text(pos2(at.x, at.y + 24.0), Align2::LEFT_CENTER, sub, t.font(12.0), t.text_dim);
+    p.text(pos2(at.x, at.y + 24.0), Align2::LEFT_CENTER, sub, t.font(11.0), t.text_dim);
     if !list.ready && list.faces.is_empty() {
         let r = Rect::from_min_size(pos2(at.x, at.y + 38.0), vec2(120.0, 22.0));
         let b = ui.put(r, egui::Button::new(crate::i18n::tr("Open Settings")));
@@ -258,8 +258,8 @@ pub fn tile(app: &mut LightcraftApp, ui: &mut egui::Ui, list: &Unnamed, i: usize
     }
     if let Some(name) = &f.suggestion {
         p.rect_filled(strip, 0.0, Color32::from_black_alpha(165));
-        let label = super::people::fit(p, name, t.font(11.5), r.width() - 18.0);
-        p.text(pos2(r.left() + 5.0, strip.center().y), Align2::LEFT_CENTER, format!("{label}?"), t.font(11.5), Color32::from_gray(225));
+        let label = super::people::fit(p, name, t.font(11.0), r.width() - 18.0);
+        p.text(pos2(r.left() + 5.0, strip.center().y), Align2::LEFT_CENTER, format!("{label}?"), t.font(11.0), Color32::from_gray(225));
     }
     if let (Some(a), Some(who)) = (&accept, &f.suggestion)
         && a.clone().on_hover_text(format!("Name this face {who}")).clicked()

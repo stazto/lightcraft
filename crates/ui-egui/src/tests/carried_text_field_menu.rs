@@ -12,7 +12,7 @@ use crate::{LightcraftApp, Services};
 const T: std::time::Duration = std::time::Duration::from_secs(10);
 const FIELD: &str = "field:search";
 
-/// Two photos in a fresh folder: the grid, and the search field of the top bar.
+/// Two photos in a fresh folder: the grid, and the search field of the filter bar.
 fn app(tag: &str) -> (Headless, PathBuf) {
     use lightcraft_catalog::{Op, Photo, Source};
     let root = std::env::temp_dir().join(format!("lc-carried-field-{tag}-{}", std::process::id()));
@@ -28,7 +28,7 @@ fn app(tag: &str) -> (Headless, PathBuf) {
         session.catalog.apply(Op::AddPhoto { photo: Box::new(p) }).unwrap();
     }
     let mut h = Headless::new(LightcraftApp::new(session, Services { png: None, ..Default::default() }), [1300.0, 1600.0], 1.0);
-    let r = h.request("ui.set", json!({"view": "photoGrid", "leftPanel": true}), T);
+    let r = h.request("ui.set", json!({"view": "photoGrid", "leftPanel": true, "filterBar": true}), T);
     assert_eq!(r["ok"], true, "{r}");
     for _ in 0..8 {
         h.step();

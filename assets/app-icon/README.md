@@ -1,48 +1,34 @@
-# LightCraft app icon
+# Lightspot app icon
 
-A **lynx**, frontal head-and-shoulders portrait with an alert gaze, in the style of an engraving: the
-Crafting Apps "owl template" (full-bleed colour field, tight portrait, the figure in paper with ink line
-work and a crisp ink contour, no roundel or border).
-
-## Palette (exactly three colours)
-
-| Colour | Hex | Used for |
-|---|---|---|
-| Ink | `#0b0b0c` | line work and the contour |
-| Paper | `#efe9dc` | the figure (the lynx) |
-| LightCraft amber | `#f2a516` | the full-bleed field (the app colour) |
+The **"Ls" mark**: the letters L and s in cyan (`#2dc0fe`) on a full-bleed navy tile (`#02173b`),
+no roundel or border.
 
 ## Geometry
 
-`viewBox="0 0 512 512"`, a rounded-square tile with `rx=112`, clipped; the colour fills the whole tile.
+A rounded-square tile with `rx=112` on a 512 grid, clipped; the navy fills the whole tile.
 macOS files (`.icns`, `lightcraft-macos-512.png`) add Apple's transparent margin (an 824/1024 body);
-Windows and Linux files use the full-bleed tile so the lynx reads at 16-48 px.
+Windows and Linux files use the full-bleed tile so the mark reads at 16-48 px.
 
 ## Provenance
 
-The owner's original drawing, made in ArtCraft (2880 px, keyed to the three colours) and
-vectorised. `lightcraft.svg` here is the canonical artwork. Licence:
-`LICENSE.txt` (MIT OR Apache-2.0, like the repo).
+The owner's original artwork, supplied as a 1254 px raster. Licence: `LICENSE.txt`
+(MIT OR Apache-2.0, like the repo).
 
 ## Files
 
 | File | What |
 |---|---|
-| `lightcraft.svg` | canonical vector, traced at 2048 px (about 770 KB) |
-| `lightcraft-small.svg` | lighter vector, traced at 1024 px (about 360 KB) |
+| `lightcraft.svg` | the tile with the artwork (1024 px) embedded and clipped round |
+| `lightcraft-small.svg` | the same with a 512 px embed (Linux scalable icon) |
 | `lightcraft-1024.png` | 1024 px render (store listings, docs) |
-| `lightcraft-macos-512.png` | runtime window/Dock icon on macOS (embedded by `apps/lightcraft/src/main.rs`) |
-| `lightcraft.icns` | macOS bundle icon (`CFBundleIconFile`) |
-| `lightcraft.ico` | Windows icon, 16-256 px, embedded in `lightcraft.exe` by `apps/lightcraft/build.rs` |
-| `hicolor/<n>x<n>/apps/ai.storyteller.lightcraft.png` | Linux icon theme, 16-512 px; the 256 px one is also the runtime window icon on Windows and Linux |
+| `lightcraft-macos-512.png` | 512 px with Apple's margin: the runtime window / Dock icon on macOS |
+| `lightcraft.icns` | macOS bundle icon (Apple's margin, 16-512 px and @2x) |
+| `lightcraft.ico` | Windows icon (16-256 px) |
+| `hicolor/<size>/apps/ai.storyteller.lightcraft.png` | Linux hicolor theme (also the runtime window icon on Windows and Linux: 256x256) |
 | `hicolor/scalable/apps/ai.storyteller.lightcraft.svg` | Linux scalable icon (the small SVG) |
 
-The app id is `ai.storyteller.lightcraft`: the Wayland app id, the `.desktop` file
-(`packaging/linux/ai.storyteller.lightcraft.desktop`, `Icon=ai.storyteller.lightcraft`) and the hicolor icon
-name. To install on Linux, copy `hicolor/` into `/usr/share/icons/hicolor/` (or `~/.local/share/icons/hicolor/`)
-and the `.desktop` file into `applications/`.
+## Regenerating
 
-## Regenerate
-
-Edit `lightcraft.svg` (or `lightcraft-small.svg`), then run `packaging/icons.sh` (needs `resvg`; `iconutil`
-on macOS for the `.icns`; the `.ico` is packed by `cargo xtask ico`). Every output is committed.
+The files above are rendered from the owner's artwork with Pillow and `iconutil` (the tile mask,
+Apple's margin, the hicolor sizes, the `.ico` and the `.icns`). `packaging/icons.sh` renders the
+same set from `lightcraft.svg` with `resvg`.

@@ -16,7 +16,7 @@ use crate::{LightcraftApp, Services, UiState};
 
 const T: Duration = Duration::from_secs(20);
 
-/// A folder of its own per test: `Library` (a LightCraft library, demo photos in it unless
+/// A folder of its own per test: `Library` (a Lightspot library, demo photos in it unless
 /// `empty`) and `Lightroom/Travel.lrcat` (a fake catalog) side by side.
 struct Fixture {
     /// The test's own folder.

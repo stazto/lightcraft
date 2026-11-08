@@ -137,7 +137,7 @@ impl Drop for LightroomTask {
 
 #[cfg(target_arch = "wasm32")]
 fn unsupported_wasm() -> Result<Value, String> {
-    Err("Lightroom catalog import is unavailable in browser builds; open the catalog in the native LightCraft app".into())
+    Err("Lightroom catalog import is unavailable in browser builds; open the catalog in the native Lightspot app".into())
 }
 
 /// Tests: a catalog import that never ends while the returned value lives, so a drop meets it pending.

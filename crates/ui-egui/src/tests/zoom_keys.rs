@@ -188,6 +188,7 @@ fn cmd_equals_and_minus_still_zoom_and_leave_the_thumbnail_size_alone() {
 fn search_field_keeps_equals_and_minus() {
     let mut h = grid_view(crate::state::ViewMode::PhotoGrid);
     h.app.ui.thumb_size = 220.0;
+    h.request("ui.set", json!({"filterBar": true}), T);
     let r = h.request("ui.clickWidget", json!({"id": "field:search"}), T);
     assert_eq!(r["ok"], true, "{r}");
     h.step();

@@ -998,7 +998,12 @@ fn ui_commands_7(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Val
             Ok(Value::Null)
         }
         "panel.presets" => {
-            app.ui.presets = !app.ui.presets || !crate::docking::exposed(app, crate::docking::Panel::Presets);
+            // off: open it; on and showing: close it. On but out of sight, a panel behind a
+            // sibling's tab comes to the front, while one folded away on its own (a minimized
+            // group, an iconic column) closes, as the lit button reads
+            let on = app.ui.presets;
+            let showing = crate::docking::exposed(app, crate::docking::Panel::Presets);
+            app.ui.presets = !on || (!showing && crate::docking::behind_a_tab(app, crate::docking::Panel::Presets));
             if app.ui.presets && app.ui.view != ViewMode::Detail {
                 app.ui.view = ViewMode::Detail;
             }
@@ -1180,7 +1185,14 @@ fn ui_commands_9(app: &mut LightcraftApp, _ctx: &egui::Context, id: &str, p: &Va
             Ok(Value::Null)
         }
         "view.focusSearch" => {
-            // the search field lives in the top bar of the library and detail views alike
+            // the search field is the filter bar's text filter: open the bar (in the grid, where it
+            // shows) and land in the field
+            if !app.ui.filter_bar {
+                app.ui.filter_bar = true;
+                if !matches!(app.ui.view, ViewMode::PhotoGrid | ViewMode::SquareGrid) {
+                    app.ui.view = ViewMode::PhotoGrid;
+                }
+            }
             app.ui.focus_search = true;
             Ok(Value::Null)
         }
@@ -1285,7 +1297,6 @@ fn ui_commands_10(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Va
             app.ui.dialog = Some(Dialog::About);
             Ok(Value::Null)
         }
-        "app.checkForUpdates" => crate::updates_ui::check(app),
         "photo.editInPhotoCraft" => edit_in(app, ctx, p, true),
         "photo.editInExternal" => edit_in(app, ctx, p, false),
         "photo.openOriginalInExternal" => open_original_in(app, ctx, p),
@@ -1441,8 +1452,8 @@ fn ui_commands_11(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Va
             let path = match p.get("path").and_then(Value::as_str) {
                 Some(x) => Some(x.to_string()),
                 None => {
-                    let name = format!("{}.lcpreset", group.as_deref().unwrap_or("LightCraft Presets"));
-                    let req = PickRequest::save(crate::i18n::tr("Export Presets"), crate::i18n::tr("LightCraft Preset"), &["lcpreset"], name.clone());
+                    let name = format!("{}.lcpreset", group.as_deref().unwrap_or("Lightspot Presets"));
+                    let req = PickRequest::save(crate::i18n::tr("Export Presets"), crate::i18n::tr("Lightspot Preset"), &["lcpreset"], name.clone());
                     match crate::pick::ask(app, id, p, "path", req, |s| s.save_preset_file.as_mut().map(|f| f(&name).into_iter().collect())) {
                         Picked::Now(v) => v.into_iter().next(),
                         Picked::Later => return Some(Ok(Value::Null)),
@@ -2141,12 +2152,8 @@ fn file_export_mask_effects_command(app: &mut LightcraftApp, ctx: &egui::Context
         Some(x) => Some(x.to_string()),
         None => {
             let name = format!("{}.lceffect", p.get("group").and_then(Value::as_str).unwrap_or("Effect Presets"));
-            let req = PickRequest::save(
-                crate::i18n::tr("Export Effect Presets"),
-                crate::i18n::tr("LightCraft Effect Presets"),
-                &["lceffect"],
-                name.clone(),
-            );
+            let req =
+                PickRequest::save(crate::i18n::tr("Export Effect Presets"), crate::i18n::tr("Lightspot Effect Presets"), &["lceffect"], name.clone());
             match crate::pick::ask(app, id, p, "path", req, |s| s.save_preset_file.as_mut().map(|f| f(&name).into_iter().collect())) {
                 Picked::Now(v) => v.into_iter().next(),
                 Picked::Later => return Ok(Value::Null),

@@ -456,10 +456,10 @@ impl NativeMenu {
         self.app_items.clear();
 
         // the application menu
-        let app_menu = Submenu::new("LightCraft", true);
-        let about = MenuItem::with_id("app.about", lightcraft_ui_egui::i18n::tr("About LightCraft"), true, None);
+        let app_menu = Submenu::new("Lightspot", true);
+        let about = MenuItem::with_id("app.about", lightcraft_ui_egui::i18n::tr("About Lightspot"), true, None);
         let settings = MenuItem::with_id(SETTINGS, lightcraft_ui_egui::i18n::tr("Settings…"), true, accelerator(SETTINGS_KEY));
-        let quit = MenuItem::with_id(QUIT, lightcraft_ui_egui::i18n::tr("Quit LightCraft"), true, accelerator("Cmd+Q"));
+        let quit = MenuItem::with_id(QUIT, lightcraft_ui_egui::i18n::tr("Quit Lightspot"), true, accelerator("Cmd+Q"));
         let _ = app_menu.append_items(&[
             &about,
             &PredefinedMenuItem::separator(),
@@ -467,13 +467,13 @@ impl NativeMenu {
             &PredefinedMenuItem::separator(),
             &PredefinedMenuItem::services(Some(lightcraft_ui_egui::i18n::tr("Services"))),
             &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::hide(Some(lightcraft_ui_egui::i18n::tr("Hide LightCraft"))),
+            &PredefinedMenuItem::hide(Some(lightcraft_ui_egui::i18n::tr("Hide Lightspot"))),
             &PredefinedMenuItem::hide_others(Some(lightcraft_ui_egui::i18n::tr("Hide Others"))),
             &PredefinedMenuItem::show_all(Some(lightcraft_ui_egui::i18n::tr("Show All"))),
             &PredefinedMenuItem::separator(),
             &quit,
         ]);
-        for (handle, cmd, shortcut, text) in [(&settings, SETTINGS, SETTINGS_KEY, "Settings…"), (&quit, QUIT, "Cmd+Q", "Quit LightCraft")] {
+        for (handle, cmd, shortcut, text) in [(&settings, SETTINGS, SETTINGS_KEY, "Settings…"), (&quit, QUIT, "Cmd+Q", "Quit Lightspot")] {
             let accel = accelerator(shortcut);
             self.app_items.push(Item {
                 handle: Handle::Plain(handle.clone()),

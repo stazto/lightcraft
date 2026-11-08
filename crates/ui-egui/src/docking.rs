@@ -131,7 +131,7 @@ fn error(error: DockError) -> String {
     error.to_string()
 }
 
-/// The shared checks plus LightCraft's own: saved settings cannot float, hide, share or
+/// The shared checks plus Lightspot's own: saved settings cannot float, hide, share or
 /// collapse the photo view, nor send a hidden panel back onto it.
 pub fn validate(workspace: &Workspace) -> Result<(), String> {
     workspace.validate().map_err(error)?;
@@ -272,6 +272,31 @@ pub(crate) fn exposed(app: &crate::LightcraftApp, panel: Panel) -> bool {
     app.ui.docking.as_ref().is_none_or(|workspace| exposed_in(workspace, panel))
 }
 
+/// Whether `panel` shares its tab group with another panel, so that it can be out of sight behind
+/// a sibling's tab (rather than folded away on its own: a minimized group, an iconic column).
+pub(crate) fn behind_a_tab(app: &crate::LightcraftApp, panel: Panel) -> bool {
+    fn in_node(node: &Node<Panel>, panel: Panel) -> Option<bool> {
+        match node {
+            Node::Split { first, second, .. } => in_node(first, panel).or_else(|| in_node(second, panel)),
+            Node::Tabs { panels, .. } => panels.contains(&panel).then_some(panels.len() > 1),
+            Node::Stack { entries } => entries.iter().any(|e| e.panel == panel).then_some(entries.len() > 1),
+            Node::Dock { columns, .. } => {
+                columns.iter().flat_map(|c| c.groups.iter()).find(|g| g.panels.contains(&panel)).map(|g| g.panels.len() > 1)
+            }
+            _ => None,
+        }
+    }
+    app.ui.docking.as_ref().is_some_and(|workspace| {
+        let layout = &workspace.layout;
+        layout
+            .root
+            .as_ref()
+            .and_then(|node| in_node(node, panel))
+            .or_else(|| layout.floating.iter().find_map(|window| in_node(&window.root, panel)))
+            .unwrap_or(false)
+    })
+}
+
 pub(crate) fn reveal_command(app: &mut crate::LightcraftApp, id: &str) -> Result<(), String> {
     let panel = if id == "panel.presets" && app.ui.presets {
         Some(Panel::Presets)
@@ -324,7 +349,7 @@ fn command_impl(app: &mut crate::LightcraftApp, reset: bool, params: &Value, ren
     let mut workspace = app.ui.docking.clone().unwrap_or_else(|| from_ui(app));
     if reset {
         workspace = default_workspace();
-        // The usual LightCraft starting workspace shows its current tool beside the photo.
+        // The usual Lightspot starting workspace shows its current tool beside the photo.
         set_visible(&mut workspace, Panel::Library, false)?;
         set_visible(&mut workspace, Panel::Presets, false)?;
     } else {
@@ -390,7 +415,7 @@ pub fn show(app: &mut crate::LightcraftApp, ui: &mut egui::Ui) {
     style.inactive_text = t.text_dim;
     style.border = egui::Stroke::new(1.0, t.divider);
     style.accent = t.accent;
-    style.font = t.font(12.0);
+    style.font = t.font(11.0);
     // Tool and preset panels publish hover previews before the photo consumes them.
     let mut canvas = None;
     let output = DockArea::new(egui::Id::unique("lightcraft-docking")).locked(workspace.locked).show_with_limits(
