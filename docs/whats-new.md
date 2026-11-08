@@ -1,5 +1,15 @@
 # What's new in LightCraft
 
+## 2026-11-08
+
+### The Library panel docks at the right, above Presets
+- My Photos (the Library panel: albums, folders, dates, keywords) now opens at the right of the photo, in the column
+  beside the tool panel, above Presets; nothing docks at the window's left any more, so the photo takes that side.
+  The tool strip has a My Photos button above Presets that shows and hides it (Shift+Cmd+L, as before), and the
+  sidebar button in the top bar still does too. A saved arrangement from before starts again from this one; panels
+  you move afterwards stay where you put them. Collapsed to icons, the column shows the Library's icon above
+  Presets'.
+
 ## 2026-10-30
 
 ### The Flatpak may talk to the accessibility bus

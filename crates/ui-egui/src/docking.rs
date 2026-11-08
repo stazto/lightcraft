@@ -36,10 +36,6 @@ impl Panel {
             Self::Presets => "Presets",
         }
     }
-    /// The dock the panel opens in when it has no recorded place.
-    fn home_side(self) -> Side {
-        if self == Self::Library { Side::Start } else { Side::End }
-    }
     /// The width of the panel's own column in the default workspace.
     fn home_width(self) -> f32 {
         match self {
@@ -54,8 +50,9 @@ impl Panel {
 const PRESETS_WIDTH: f32 = 300.0;
 
 /// The arrangement generation saved as `UiState::docking_version`. Settings without it hold the
-/// side panels in split frames; they start again from [`default_workspace`].
-pub const DOCKING_VERSION: u32 = 1;
+/// side panels in split frames, and version 1 docks the Library at the window's left; both start
+/// again from [`default_workspace`].
+pub const DOCKING_VERSION: u32 = 2;
 
 /// Drops saved settings' arrangement from before [`DOCKING_VERSION`], with the places of its
 /// closed panels, so the app starts from the default workspace; every other setting stays.
@@ -88,19 +85,16 @@ fn column(panel: Panel, width: f32) -> Column<Panel> {
     Column::new(vec![Group::new(vec![panel], 0)], width)
 }
 
-/// Library in a start dock and Tools in an end dock beside the photo. Presets has a column of
-/// its own on Tools' photo side rather than a group under Tools: both are tall lists that are
-/// read side by side while trying presets, and stacking them would halve both.
+/// Every panel docks at the window's right, beside the photo: Tools at the window edge, where its
+/// strip of tool icons is, and the Library above Presets in a second column on Tools' photo
+/// side. The two lists share that column rather than taking one each or a group under Tools: the
+/// Library is read while choosing photos and Presets while editing them, so they rarely need
+/// their full height at the same time, and the photo keeps the width of the left side.
 fn docked(left: f32, right: f32) -> Workspace {
-    let start = Node::Dock { side: Side::Start, columns: vec![column(Panel::Library, left)] };
-    let end = Node::Dock { side: Side::End, columns: vec![column(Panel::Tools, right), column(Panel::Presets, PRESETS_WIDTH)] };
+    let lists = Column::new(vec![Group::new(vec![Panel::Library], 0), Group::new(vec![Panel::Presets], 0)], left);
+    let end = Node::Dock { side: Side::End, columns: vec![column(Panel::Tools, right), lists] };
     Workspace::new(Layout {
-        root: Some(split(
-            SplitAxis::Horizontal,
-            SplitSize::FixedFirst(left),
-            start,
-            split(SplitAxis::Horizontal, SplitSize::FixedSecond(right + PRESETS_WIDTH), tabs(Panel::Canvas), end),
-        )),
+        root: Some(split(SplitAxis::Horizontal, SplitSize::FixedSecond(right + left), tabs(Panel::Canvas), end)),
         floating: Vec::new(),
     })
 }
@@ -109,17 +103,30 @@ pub fn default_workspace() -> Workspace {
     docked(crate::state::LEFT_WIDTH.default, crate::state::RIGHT_WIDTH.default)
 }
 
-/// Where a panel without a usable recorded place opens: its own column at its dock's window
-/// edge, or Presets on the photo side of Tools while Tools is in the end dock.
+/// Where a panel without a usable recorded place opens, in the end dock: the Library and Presets
+/// join each other's column as a group (the Library above), else take a column on the photo side
+/// of Tools while Tools is in the dock; otherwise a column of its own at the dock's window edge.
 fn home(workspace: &Workspace, panel: Panel) -> Location<Panel> {
-    let column = ColumnLocation { side: panel.home_side(), width: panel.home_width(), iconic: false, iconic_width: None };
+    let column = ColumnLocation { side: Side::End, width: panel.home_width(), iconic: false, iconic_width: None };
     let docked_at =
         |other: Panel| workspace.layout.location(&other).ok().and_then(|location| location.group).and_then(|group| group.column).map(|c| c.side);
-    let beside = (panel == Panel::Presets && docked_at(Panel::Tools) == Some(Side::End)).then_some(Panel::Tools);
+    let partner = match panel {
+        Panel::Library => Some(Panel::Presets),
+        Panel::Presets => Some(Panel::Library),
+        Panel::Canvas | Panel::Tools => None,
+    }
+    .filter(|partner| docked_at(*partner) == Some(Side::End));
+    let (anchor, placement) = match partner {
+        Some(partner) => (Some(partner), Placement::Group { below: panel == Panel::Presets, height: None }),
+        None if panel != Panel::Tools && panel != Panel::Canvas && docked_at(Panel::Tools) == Some(Side::End) => {
+            (Some(Panel::Tools), Placement::Column { after: true })
+        }
+        None => (None, Placement::Tab { before: None }),
+    };
     Location {
         floating: None,
-        anchor: beside,
-        placement: if beside.is_some() { Placement::Column { after: true } } else { Placement::Tab { before: None } },
+        anchor,
+        placement,
         size: None,
         stack: None,
         sibling: Vec::new(),
@@ -720,23 +727,24 @@ mod tests {
     }
 
     #[test]
-    fn default_workspace_docks_library_at_the_start_and_tools_and_presets_at_the_end() {
+    fn default_workspace_docks_every_panel_at_the_end_with_the_library_above_presets() {
         let workspace = default_workspace();
         validate(&workspace).unwrap();
-        assert_eq!(columns(&workspace, Side::Start), [(crate::state::LEFT_WIDTH.default, vec![vec![Panel::Library]])]);
+        assert!(columns(&workspace, Side::Start).is_empty(), "nothing docks at the window's left");
         assert_eq!(
             columns(&workspace, Side::End),
-            [(crate::state::RIGHT_WIDTH.default, vec![vec![Panel::Tools]]), (PRESETS_WIDTH, vec![vec![Panel::Presets]])],
-            "Presets has its own column on Tools' photo side"
+            [
+                (crate::state::RIGHT_WIDTH.default, vec![vec![Panel::Tools]]),
+                (crate::state::LEFT_WIDTH.default, vec![vec![Panel::Library], vec![Panel::Presets]])
+            ],
+            "Tools at the window edge; the Library above Presets in one column on its photo side"
         );
-        let Some(Node::Split { second, .. }) = &workspace.layout.root else { panic!("{:?}", workspace.layout.root) };
-        let Node::Split { first, .. } = &**second else { panic!("{second:?}") };
-        assert_eq!(**first, tabs(Panel::Canvas), "the photo sits between the docks");
+        let Some(Node::Split { first, .. }) = &workspace.layout.root else { panic!("{:?}", workspace.layout.root) };
+        assert_eq!(**first, tabs(Panel::Canvas), "the photo takes the left of the window");
         assert!(workspace.layout.floating.is_empty());
         let app = app_with_widths();
         let workspace = from_ui(&app);
-        assert_eq!(columns(&workspace, Side::Start).first().map(|column| column.0), Some(333.0));
-        assert_eq!(columns(&workspace, Side::End).first().map(|column| column.0), Some(410.0));
+        assert_eq!(columns(&workspace, Side::End).iter().map(|column| column.0).collect::<Vec<_>>(), [410.0, 333.0]);
     }
 
     #[test]
@@ -751,7 +759,11 @@ mod tests {
         let workspace = state.docking.as_mut().unwrap();
         assert_eq!(columns(workspace, Side::End).first().map(|column| column.0), Some(400.0), "Tools' column");
         set_visible(workspace, Panel::Library, true).unwrap();
-        assert_eq!(columns(workspace, Side::Start), [(350.0, vec![vec![Panel::Library]])], "the closed Library's column");
+        assert_eq!(
+            columns(workspace, Side::End).into_iter().map(|(_, groups)| groups).collect::<Vec<_>>(),
+            [vec![vec![Panel::Tools]], vec![vec![Panel::Library], vec![Panel::Presets]]],
+            "the Library comes back above Presets"
+        );
     }
 
     #[test]
@@ -766,15 +778,23 @@ mod tests {
         set_visible(&mut workspace, Panel::Presets, true).unwrap();
         set_visible(&mut workspace, Panel::Library, true).unwrap();
         validate(&workspace).unwrap();
-        assert_eq!(columns(&workspace, Side::Start), [(crate::state::LEFT_WIDTH.default, vec![vec![Panel::Library]])]);
-        assert_eq!(columns(&workspace, Side::End), [(300.0, vec![vec![Panel::Tools]]), (PRESETS_WIDTH, vec![vec![Panel::Presets]])]);
-        // Without Tools in the end dock, Presets takes the dock's window edge.
+        assert!(columns(&workspace, Side::Start).is_empty());
+        assert_eq!(
+            columns(&workspace, Side::End),
+            [(300.0, vec![vec![Panel::Tools]]), (PRESETS_WIDTH, vec![vec![Panel::Library], vec![Panel::Presets]])],
+            "Presets takes Tools' photo side, and the Library the group above it"
+        );
+        // Without Tools in the end dock, Presets takes the dock's window edge, and the Library
+        // still joins it from above.
         let mut workspace = default_workspace();
         set_visible(&mut workspace, Panel::Presets, false).unwrap();
+        set_visible(&mut workspace, Panel::Library, false).unwrap();
         workspace.hidden.clear();
         apply(&mut workspace, Action::Float { panel: Panel::Tools, rect: [12.0, 34.0, 390.0, 450.0] }).unwrap();
         set_visible(&mut workspace, Panel::Presets, true).unwrap();
         assert_eq!(columns(&workspace, Side::End), [(PRESETS_WIDTH, vec![vec![Panel::Presets]])]);
+        set_visible(&mut workspace, Panel::Library, true).unwrap();
+        assert_eq!(columns(&workspace, Side::End), [(PRESETS_WIDTH, vec![vec![Panel::Library], vec![Panel::Presets]])]);
     }
 
     fn saved_settings(docking: Value, version: Option<u32>) -> serde_json::Map<String, Value> {
@@ -813,7 +833,8 @@ mod tests {
             assert!(!workspace.layout.contains(&Panel::Library), "the Library panel stays closed");
             assert_eq!(
                 columns(workspace, Side::End),
-                [(crate::state::RIGHT_WIDTH.default, vec![vec![Panel::Tools]]), (PRESETS_WIDTH, vec![vec![Panel::Presets]])]
+                [(crate::state::RIGHT_WIDTH.default, vec![vec![Panel::Tools]]), (crate::state::LEFT_WIDTH.default, vec![vec![Panel::Presets]])],
+                "Presets keeps the lists' column, sized by the Library width control"
             );
         }
     }
@@ -855,6 +876,8 @@ mod tests {
         validate(&workspace).unwrap();
         set_visible(&mut workspace, Panel::Library, true).unwrap();
         validate(&workspace).unwrap();
-        assert_eq!(columns(&workspace, Side::Start), [(crate::state::LEFT_WIDTH.default, vec![vec![Panel::Library]])]);
+        // Tools is in a split frame, not a dock column: the Library makes the end dock itself
+        assert!(columns(&workspace, Side::Start).is_empty());
+        assert_eq!(columns(&workspace, Side::End), [(crate::state::LEFT_WIDTH.default, vec![vec![Panel::Library]])]);
     }
 }

@@ -51,21 +51,27 @@ fn window_menu_reopens_closed_panels_in_their_dock_columns() {
     let columns = |h: &Headless, side| {
         crate::docking::columns(h.app.ui.docking.as_ref().unwrap(), side).into_iter().map(|(_, groups)| groups).collect::<Vec<_>>()
     };
-    let end = vec![vec![vec![Panel::Tools]], vec![vec![Panel::Presets]]];
+    let end = vec![vec![vec![Panel::Tools]], vec![vec![Panel::Library], vec![Panel::Presets]]];
     h.app.run("panel.presets", json!({})).unwrap();
     h.step();
-    assert_eq!(columns(&h, Side::End), end, "Presets opens on Tools' photo side");
+    assert_eq!(columns(&h, Side::End), end, "Presets opens under the Library on Tools' photo side");
+    assert!(columns(&h, Side::Start).is_empty(), "nothing docks at the window's left");
     dock(&mut h, json!({"operation":"close","panel":"tools"}));
     assert_eq!(h.app.ui.right, RightPanel::None);
     h.app.run("panel.edit", json!({})).unwrap();
     h.step();
     assert_eq!(columns(&h, Side::End), end, "Tools reopens at the window edge");
-    let width = crate::docking::columns(h.app.ui.docking.as_ref().unwrap(), Side::Start).first().unwrap().0;
+    let widths: Vec<f32> = crate::docking::columns(h.app.ui.docking.as_ref().unwrap(), Side::End).into_iter().map(|(width, _)| width).collect();
     dock(&mut h, json!({"operation":"close","panel":"library"}));
     assert!(!h.app.ui.left_panel);
+    assert_eq!(columns(&h, Side::End), vec![vec![vec![Panel::Tools]], vec![vec![Panel::Presets]]], "Presets keeps the lists' column");
     h.app.run("view.leftPanel", json!({})).unwrap();
     h.step();
-    assert_eq!(crate::docking::columns(h.app.ui.docking.as_ref().unwrap(), Side::Start), [(width, vec![vec![Panel::Library]])]);
+    assert_eq!(
+        crate::docking::columns(h.app.ui.docking.as_ref().unwrap(), Side::End),
+        [(widths[0], vec![vec![Panel::Tools]]), (widths[1], vec![vec![Panel::Library], vec![Panel::Presets]])],
+        "the Library reopens above Presets"
+    );
 }
 
 #[test]
@@ -153,7 +159,9 @@ fn floating_panel_blocks_photo_album_drop_then_uncovered_target_adds_exact_selec
     release(&mut h, row.center());
     assert!(h.app.session.catalog.album(lightcraft_catalog::AlbumId(album)).unwrap().photos.is_empty());
     assert_eq!(h.app.session.undo.len(), undo);
-    dock(&mut h, json!({"operation":"moveFloating","panel":"tools","rect":[800,100,330,500]}));
+    dock(&mut h, json!({"operation":"moveFloating","panel":"tools","rect":[100,100,330,500]}));
+    // the Library's column slid to the window edge when Tools left the dock
+    let row = rect(&h, &format!("source:album:{album}"));
     h.app.ui.dragging_photos = Some(ids.clone());
     release(&mut h, row.center());
     assert_eq!(
@@ -273,7 +281,8 @@ fn covered_folder_rejects_album_move_and_uncovered_folder_nests_exact_album() {
     release(&mut h, row.center());
     assert_eq!(h.app.session.catalog.album(lightcraft_catalog::AlbumId(child)).unwrap().parent, None);
     assert_eq!(h.app.session.undo.len(), undo);
-    dock(&mut h, json!({"operation":"moveFloating","panel":"tools","rect":[800,100,330,500]}));
+    dock(&mut h, json!({"operation":"moveFloating","panel":"tools","rect":[100,100,330,500]}));
+    let row = rect(&h, &format!("source:folder:{folder}"));
     h.app.ui.dragging_album = Some(child);
     release(&mut h, row.center());
     assert_eq!(h.app.session.catalog.album(lightcraft_catalog::AlbumId(child)).unwrap().parent, Some(lightcraft_catalog::AlbumId(folder)));

@@ -1,4 +1,4 @@
-//! The vertical tool strip at the far right (Presets, Edit, Crop, Remove, Masking, Red Eye …).
+//! The vertical tool strip at the far right (My Photos, Presets, Edit, Crop, Remove, Masking, Red Eye …).
 
 use egui::vec2;
 use serde_json::json;
@@ -31,6 +31,10 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
             ui.vertical_centered(|ui| {
                 ui.spacing_mut().item_spacing.y = GAP;
                 let sz = vec2(t.strip_w, BUTTON_H);
+                // the Library panel opens in this dock, above Presets: its button sits above theirs
+                if icon_button(ui, "library", Icon::Photos, sz, app.ui.left_panel, true, "My Photos (Shift+Cmd+L)").clicked() {
+                    let _ = app.run("view.leftPanel", json!({}));
+                }
                 if icon_button(ui, "presets", Icon::Presets, sz, app.ui.presets, has_photo, "Presets (Shift+P)").clicked() {
                     let _ = app.run("panel.presets", json!({}));
                 }
@@ -93,7 +97,7 @@ mod tests {
     use crate::headless::HeadlessView;
 
     #[test]
-    fn info_ends_as_far_above_the_bottom_as_presets_starts_below_the_top() {
+    fn info_ends_as_far_above_the_bottom_as_the_library_button_starts_below_the_top() {
         let mut app = LightcraftApp::new(lightcraft_engine::Session::new(), Services::default());
         let mut view = HeadlessView::new();
         let mut widgets = vec![];
@@ -103,9 +107,10 @@ mod tests {
             widgets = crate::widgets::take_registry(&view.ctx);
         }
         let rect = |id: &str| widgets.iter().find(|(w, _)| w == id).unwrap_or_else(|| panic!("{id} not registered")).1;
-        let (presets, keywords, info) = (rect("icon:presets"), rect("icon:keywords"), rect("icon:info"));
-        let (top, bottom) = (presets.top(), 700.0 - info.bottom());
-        assert!((top - bottom).abs() < 0.5, "Presets starts {top} below the top, Info ends {bottom} above the bottom");
+        let (library, presets, keywords, info) = (rect("icon:library"), rect("icon:presets"), rect("icon:keywords"), rect("icon:info"));
+        let (top, bottom) = (library.top(), 700.0 - info.bottom());
+        assert!((top - bottom).abs() < 0.5, "My Photos starts {top} below the top, Info ends {bottom} above the bottom");
+        assert_eq!(presets.top() - library.bottom(), GAP, "Presets follows My Photos");
         assert_eq!(info.top() - keywords.bottom(), GAP, "the bottom buttons are spaced like the top ones");
     }
 }

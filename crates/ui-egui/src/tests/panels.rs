@@ -44,8 +44,10 @@ fn side_panels_resize_by_their_inner_edge_and_remember_it() {
     drag(&mut h, right.left() + 2.0, -120.0);
     assert!((h.app.ui.right_width - (RIGHT_WIDTH.default + 120.0)).abs() <= 2.0, "{}", h.app.ui.right_width);
     assert!((widget(&h, "panel:right_panel").width() - h.app.ui.right_width).abs() <= 1.0);
-    // the left sidebar's right edge: 70 pt wider
-    drag(&mut h, left.right() - 2.0, 70.0);
+    // the Library's left edge (its inner one, towards the photo): 70 pt wider. Its column moved
+    // with the wider Tools beside it, so its edge is read again.
+    let left = widget(&h, "panel:left_panel");
+    drag(&mut h, left.left() + 2.0, -70.0);
     assert!((h.app.ui.left_width - (LEFT_WIDTH.default + 70.0)).abs() <= 2.0, "{}", h.app.ui.left_width);
     // kept across panel switches and view changes
     let (lw, rw) = (h.app.ui.left_width, h.app.ui.right_width);
@@ -62,15 +64,16 @@ fn side_panels_resize_by_their_inner_edge_and_remember_it() {
     let right = widget(&h, "panel:right_panel");
     drag(&mut h, right.left() + 2.0, -1400.0);
     let left = widget(&h, "panel:left_panel");
-    drag(&mut h, left.right() - 2.0, 1400.0);
+    drag(&mut h, left.left() + 2.0, -1400.0);
     h.step();
     let (left, right) = (widget(&h, "panel:left_panel"), widget(&h, "panel:right_panel"));
     assert!(right.width() <= RIGHT_WIDTH.max && left.width() <= LEFT_WIDTH.max, "{left:?} {right:?}");
-    assert!(right.left() - left.right() >= MIN_PHOTO_WIDTH - 1.0, "photo area {} wide", right.left() - left.right());
+    // (the photo takes the window's left, up to the Library's column)
+    assert!(left.left() >= MIN_PHOTO_WIDTH - 1.0, "photo area {} wide", left.left());
     // …and neither panel gets narrower than its minimum
     drag(&mut h, right.left() + 2.0, 1400.0);
     let left = widget(&h, "panel:left_panel");
-    drag(&mut h, left.right() - 2.0, -1400.0);
+    drag(&mut h, left.left() + 2.0, 1400.0);
     assert_eq!((h.app.ui.left_width, h.app.ui.right_width), (LEFT_WIDTH.min, RIGHT_WIDTH.min));
     // out-of-range saved widths are clamped on load
     let mut u = crate::UiState { left_width: 5.0, right_width: f32::NAN, ..Default::default() }.sanitized();
@@ -161,7 +164,7 @@ fn a_narrow_window_shrinks_the_panels_without_forgetting_their_width() {
     h.request("ui.resize", json!({"width": 1000.0, "height": 800.0}), T);
     h.settle(SETTLE);
     let (left, right) = (widget(&h, "panel:left_panel"), widget(&h, "panel:right_panel"));
-    assert!(right.left() - left.right() >= MIN_PHOTO_WIDTH - 1.0, "{left:?} {right:?}");
+    assert!(left.left() >= MIN_PHOTO_WIDTH - 1.0, "{left:?} {right:?}");
     // the chosen widths come back when the window does
     assert_eq!((h.app.ui.left_width, h.app.ui.right_width), (400.0, 480.0));
     h.request("ui.resize", json!({"width": 1400.0, "height": 900.0}), T);
@@ -730,7 +733,8 @@ fn the_header_of_a_long_section_stays_in_sight() {
 
 /// Scroll the sidebar (the pointer over it) by `dy`.
 pub(crate) fn scroll_sidebar(h: &mut Headless, dy: f32) {
-    h.request("ui.move", json!({"x": 120.0, "y": 400.0}), T);
+    let panel = widget(h, "panel:left_panel");
+    h.request("ui.move", json!({"x": panel.center().x, "y": 400.0}), T);
     let r = h.request("ui.scroll", json!({"dy": dy}), T);
     assert_eq!(r["ok"], true, "{r}");
     for _ in 0..60 {
@@ -1624,7 +1628,7 @@ fn folders_app_with_deep_labeled_chain() -> (Headless, String) {
     // (tall enough for every row of the chain to be drawn: rows below the fold are not)
     let mut h = folders_app_sized(&refs, [1400.0, 1500.0]);
     let left = widget(&h, "panel:left_panel");
-    drag(&mut h, left.right() - 2.0, -1400.0);
+    drag(&mut h, left.left() + 2.0, 1400.0);
     assert_eq!(h.app.ui.left_width, crate::state::LEFT_WIDTH.min, "the panel at its narrowest");
     let mut path = String::new();
     for name in &names[..names.len() - 1] {
