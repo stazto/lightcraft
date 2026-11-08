@@ -252,6 +252,10 @@ pub fn start(app: &mut LightcraftApp, d: &ImportDialog) -> Result<Value, String>
             params["dng"] = json!(true);
         }
     }
+    if let Some(camera) = &d.camera {
+        // the files are on the camera: copy the picks first, import the copies when they are here
+        return crate::camera_import::start(app, d, camera, params);
+    }
     let total = queue.len();
     app.import = Some(ImportTask::new(queue, params, undo0, false));
     app.renderer.forget_imports();

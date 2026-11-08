@@ -1,0 +1,16 @@
+[package]
+name = "lightcraft-ptp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "LightCraft ptp (L0): cameras over USB (PTP / MTP), listed and read in pure Rust"
+
+[lints]
+workspace = true
+
+[dependencies]
+log = { workspace = true }
+
+# cameras are USB devices natively only (the web build has no USB)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+nusb = "0.2"

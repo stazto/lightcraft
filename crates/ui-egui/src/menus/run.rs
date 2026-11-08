@@ -48,6 +48,32 @@ fn parent_param(p: &Value) -> Option<u64> {
     p.get("parent").and_then(Value::as_u64)
 }
 
+/// `file.addFromDevice {path?, album?}`: a camera or card into the import review, copying into the
+/// library by default. Without `path`, the first device found.
+fn add_from_device(app: &mut LightcraftApp, ctx: &egui::Context, p: &Value) -> Result<Value, String> {
+    // a camera / card: review its DCIM folder, copying into the library by default
+    let path = match p.get("path").and_then(Value::as_str) {
+        Some(x) => x.to_string(),
+        None => match lightcraft_engine::devices::devices_now().into_iter().next() {
+            Some(d) => d.path,
+            None => return Err("no camera or memory card found".into()),
+        },
+    };
+    // a camera over USB: the review lists the camera itself; its Import copies what is picked
+    if let Some(camera) = lightcraft_engine::devices::devices_now().into_iter().find(|d| d.camera.is_some() && d.path == path) {
+        let _ = ctx;
+        return crate::import::open_camera(app, &camera, p.get("album").and_then(Value::as_u64));
+    }
+    let r = crate::import::open(app, vec![path]);
+    // only the scan just started (an error means another scan is running)
+    if r.is_ok()
+        && let Some(t) = &mut app.scan
+    {
+        t.copy = true;
+    }
+    import_into_album(app, p, r)
+}
+
 /// `file.addPhotos` / `file.addFolder` / `file.addFromDevice` `{album?}`: the review of the scan
 /// just started opens with that album chosen (an album's context menu ▸ Import ▸ …). An error
 /// means another scan is running.
@@ -1395,24 +1421,7 @@ fn ui_commands_11(app: &mut LightcraftApp, ctx: &egui::Context, id: &str, p: &Va
         "file.findMissing" => file_find_missing_command(app, id, p),
         "photo.tagFromTracklog" => photo_tag_from_tracklog_command(app, ctx, id, p),
         "photo.locate" => photo_locate_command(app, p),
-        "file.addFromDevice" => {
-            // a camera / card: review its DCIM folder, copying into the library by default
-            let path = match p.get("path").and_then(Value::as_str) {
-                Some(x) => x.to_string(),
-                None => match lightcraft_engine::devices::devices_now().into_iter().next() {
-                    Some(d) => d.path,
-                    None => return Some(Err("no camera or memory card found".into())),
-                },
-            };
-            let r = crate::import::open(app, vec![path]);
-            // only the scan just started (an error means another scan is running)
-            if r.is_ok()
-                && let Some(t) = &mut app.scan
-            {
-                t.copy = true;
-            }
-            import_into_album(app, p, r)
-        }
+        "file.addFromDevice" => add_from_device(app, ctx, p),
         "file.addFolder" => {
             // a folder (searched recursively) into the import review
             let path = match p.get("path").and_then(Value::as_str) {

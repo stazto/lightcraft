@@ -3348,6 +3348,7 @@ fn a_connected_card_opens_the_import_review() {
         name: "NIKON Z 8".into(),
         path: root.join("DCIM").to_string_lossy().to_string(),
         root: root.to_string_lossy().to_string(),
+        camera: None,
     };
     h.app.ui.dialog = None;
     // first look: the card was already in

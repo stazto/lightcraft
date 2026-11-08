@@ -379,8 +379,92 @@ pub fn specs() -> Vec<CommandSpec> {
             s.selection = Selection { active: s.selection.active.filter(|a| vis.contains(a)).or(vis.first().copied()), ids: vis };
             Ok(json!({"selected": s.selection.ids.len()}))
         }),
-        cmd!(query "library.devices", "Cameras and Cards", [], None, "{} → [{name, path (its DCIM folder), root}] — mounted volumes with a DCIM folder", always, |_, _| {
+        cmd!(query "library.devices", "Cameras and Cards", [], None, "{} → [{name, path (its DCIM folder), root, camera?}] — mounted volumes with a DCIM folder, and cameras over USB (PTP; `camera` is their id for library.cameraFetch, `path` the folder their files are copied into)", always, |_, _| {
             Ok(serde_json::to_value(crate::devices::devices_now()).unwrap_or_default())
+        }),
+        cmd!(
+            "library.cameraFetch",
+            "Copy from Camera",
+            [],
+            None,
+            "{camera: id from library.devices} — copies the camera's files over USB into its device folder (progress in the activity stack; library.cameraFetches reports it), to import that folder afterwards",
+            always,
+            |s, p| {
+                let id = str_param(p, "camera").ok_or_else(|| bad("library.cameraFetch", "camera (an id from library.devices) is required"))?;
+                let camera = crate::devices::camera_by_id(id).ok_or_else(|| bad("library.cameraFetch", format!("no camera {id} is plugged in")))?;
+                let root = crate::devices::camera_root(id);
+                #[cfg(not(target_arch = "wasm32"))]
+                s.camera_fetches.start(&camera, root.clone(), &s.activity).map_err(|e| bad("library.cameraFetch", e))?;
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let _ = (&camera, &s.camera_fetches);
+                    return Err(bad("library.cameraFetch", "cameras over USB are not reachable from the browser"));
+                }
+                Ok(json!({"camera": camera.id, "name": camera.name, "path": root.join("DCIM").to_string_lossy()}))
+            }
+        ),
+        cmd!(query "library.cameraList", "List Camera", [], None, "{camera: id from library.devices} → [{handle, size, name, path (its folders and name on the camera), captured?}] — the files on a camera over USB, for the import review", always, |s, p| {
+            let id = str_param(p, "camera").ok_or_else(|| bad("library.cameraList", "camera (an id from library.devices) is required"))?;
+            let objects = s.cameras.list(id).map_err(|e| bad("library.cameraList", e))?;
+            Ok(json!(objects.iter().filter(|o| !o.is_folder()).map(|o| json!({"handle": o.handle, "size": o.size, "name": o.name, "path": o.relative_path(), "captured": o.captured})).collect::<Vec<_>>()))
+        }),
+        cmd!(
+            "library.cameraCopy",
+            "Copy from Camera",
+            [],
+            None,
+            "{camera: id from library.devices, name?: shown in the activity stack, items: [{handle, size, name, target: file path to write}]} — copies the picked files over USB on a worker (library.cameraCopies reports it)",
+            always,
+            |s, p| {
+                let id = str_param(p, "camera").ok_or_else(|| bad("library.cameraCopy", "camera (an id from library.devices) is required"))?;
+                let name = str_param(p, "name").unwrap_or("camera").to_string();
+                let items: Vec<crate::camera_fetch::Item> = p
+                    .get("items")
+                    .and_then(Value::as_array)
+                    .ok_or_else(|| bad("library.cameraCopy", "items (an array of {handle, size, name, target}) is required"))?
+                    .iter()
+                    .map(|i| {
+                        let handle = i
+                            .get("handle")
+                            .and_then(Value::as_u64)
+                            .and_then(|h| u32::try_from(h).ok())
+                            .ok_or_else(|| bad("library.cameraCopy", "an item needs a handle"))?;
+                        let target = i
+                            .get("target")
+                            .and_then(Value::as_str)
+                            .filter(|t| !t.is_empty())
+                            .ok_or_else(|| bad("library.cameraCopy", "an item needs a target path"))?;
+                        Ok::<_, crate::EngineError>(crate::camera_fetch::Item {
+                            handle,
+                            size: i.get("size").and_then(Value::as_u64).unwrap_or(0),
+                            name: i.get("name").and_then(Value::as_str).unwrap_or(target).to_string(),
+                            target: std::path::PathBuf::from(target),
+                        })
+                    })
+                    .collect::<std::result::Result<_, _>>()?;
+                if items.is_empty() {
+                    return Err(bad("library.cameraCopy", "nothing to copy"));
+                }
+                let n = items.len();
+                s.cameras.start(id, &name, items, &s.activity).map_err(|e| bad("library.cameraCopy", e))?;
+                Ok(json!({"camera": id, "copying": n}))
+            }
+        ),
+        cmd!(query "library.cameraCopies", "Camera Copies", [], None, "{} → [{camera, state: running {filesDone, filesTotal, bytes, total} | done {targets, copied, skipped} | failed | cancelled}] — the copies started by library.cameraCopy", always, |s, _| {
+            let list: Vec<serde_json::Value> = s.cameras.snapshot().into_iter().map(|(camera, state)| {
+                let mut v = serde_json::to_value(state).unwrap_or_default();
+                if let Some(o) = v.as_object_mut() { o.insert("camera".into(), json!(camera)); }
+                v
+            }).collect();
+            Ok(json!(list))
+        }),
+        cmd!(query "library.cameraFetches", "Camera Copies (whole card)", [], None, "{} → [{camera, state: running {filesDone, filesTotal, bytes, total} | done {dcim, copied, skipped} | failed | cancelled}]", always, |s, _| {
+            let list: Vec<serde_json::Value> = s.camera_fetches.snapshot().into_iter().map(|(camera, state)| {
+                let mut v = serde_json::to_value(state).unwrap_or_default();
+                if let Some(o) = v.as_object_mut() { o.insert("camera".into(), json!(camera)); }
+                v
+            }).collect();
+            Ok(json!(list))
         }),
         cmd!(query "photo.copyMetadata", "Copy Metadata", ["Photo"], Some("Cmd+Alt+Shift+C"), "{} — title, caption, copyright (notice, status, usage terms, info URL), creator, location and keywords of the active photo", has_active, |s, _| {
             let id = s.active().ok_or_else(|| bad("photo.copyMetadata", "no active photo"))?;

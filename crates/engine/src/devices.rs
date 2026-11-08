@@ -1,6 +1,8 @@
 //! Cameras and memory cards: mounted volumes with a `DCIM` folder (the DCF layout every camera
-//! writes). Listed by `library.devices`; the app offers them under File → Import from Device, and
-//! the import review copies from them into the library.
+//! writes), and cameras plugged in over USB that speak PTP (a Canon EOS, say, which mounts no
+//! disk). Listed by `library.devices`; the app offers them under File → Import from Device, and
+//! the import review copies from them into the library. A USB camera is copied into its own
+//! folder first (`library.cameraFetch`, [`camera_root`]); that folder's `DCIM` is its device path.
 //!
 //! Menus are rebuilt every frame (even with their popups closed), so [`devices`] never touches the
 //! disk: it serves the last scan and, when that is older than [`MAX_AGE`], starts one background
@@ -19,8 +21,11 @@ pub struct Device {
     pub name: String,
     /// Its `DCIM` folder (what gets imported).
     pub path: String,
-    /// The volume's mount point.
+    /// The volume's mount point (a USB camera: the folder its files are copied into).
     pub root: String,
+    /// A camera over USB: its id for `library.cameraFetch`. `None` for a mounted volume.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub camera: Option<String>,
 }
 
 /// How long a scan is served before [`devices`] starts another one.
@@ -177,12 +182,89 @@ pub fn on_change(f: impl Fn() + Send + Sync + 'static) {
 }
 
 fn scan() -> Vec<Device> {
+    let mut out = scan_volumes();
+    out.extend(camera_devices());
+    out
+}
+
+fn scan_volumes() -> Vec<Device> {
     let mut extra = Vec::new();
     if cfg!(windows) && std::env::var_os("LIGHTCRAFT_DEVICE_ROOTS").is_none() {
         extra.extend((b'D'..=b'Z').map(|c| std::path::PathBuf::from(format!("{}:\\", c as char))));
     }
     devices_in(&mount_parents(), extra)
 }
+
+/// The folder a USB camera's files are copied into: `<settings folder>/cameras/<id>`; its `DCIM`
+/// is the device path the import reads.
+pub fn camera_root(id: &str) -> std::path::PathBuf {
+    let safe: String = id.chars().map(|c| if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.') { c } else { '_' }).collect();
+    crate::config::config_dir().unwrap_or_else(|| std::env::temp_dir().join("lightspot")).join("cameras").join(safe)
+}
+
+/// The camera `id` names, if it is still plugged in.
+pub fn camera_by_id(id: &str) -> Option<lightcraft_ptp::CameraInfo> {
+    lightcraft_ptp::cameras().into_iter().find(|c| c.id == id)
+}
+
+/// The cameras on USB as devices, named by their model where it could be read.
+fn camera_devices() -> Vec<Device> {
+    lightcraft_ptp::cameras()
+        .into_iter()
+        .map(|c| {
+            let root = camera_root(&c.id);
+            Device {
+                name: camera_display_name(&c),
+                path: root.join("DCIM").to_string_lossy().to_string(),
+                root: root.to_string_lossy().to_string(),
+                camera: Some(c.id),
+            }
+        })
+        .collect()
+}
+
+/// The model the camera reports over PTP ("Canon EOS RP"), read once per camera and kept; the USB
+/// product string ("Canon Digital Camera") while it can't be read (another program holds the
+/// camera), tried again after [`NAME_RETRY`].
+#[cfg(not(target_arch = "wasm32"))]
+fn camera_display_name(c: &lightcraft_ptp::CameraInfo) -> String {
+    use std::collections::HashMap;
+    use std::sync::OnceLock;
+    use std::time::Instant;
+    static NAMES: OnceLock<Mutex<HashMap<String, (Option<String>, Instant)>>> = OnceLock::new();
+    let names = NAMES.get_or_init(Mutex::default);
+    {
+        let known = names.lock().unwrap_or_else(|e| e.into_inner());
+        match known.get(&c.id) {
+            Some((Some(name), _)) => return name.clone(),
+            Some((None, tried)) if tried.elapsed() < NAME_RETRY => return c.name.clone(),
+            _ => {}
+        }
+    }
+    let read = lightcraft_ptp::Camera::open(c).ok().map(|cam| {
+        let info = cam.device_info();
+        // "Canon Inc." / "Canon.Inc" → "Canon"; a model that already names its maker stays as it is
+        let maker: String = info.manufacturer.chars().take_while(|c| c.is_alphanumeric()).collect();
+        if maker.is_empty() || info.model.is_empty() || info.model.to_lowercase().starts_with(&maker.to_lowercase()) {
+            info.model.clone()
+        } else {
+            format!("{maker} {}", info.model)
+        }
+    });
+    let read = read.filter(|n| !n.trim().is_empty());
+    let shown = read.clone().unwrap_or_else(|| c.name.clone());
+    names.lock().unwrap_or_else(|e| e.into_inner()).insert(c.id.clone(), (read, Instant::now()));
+    shown
+}
+
+#[cfg(target_arch = "wasm32")]
+fn camera_display_name(c: &lightcraft_ptp::CameraInfo) -> String {
+    c.name.clone()
+}
+
+/// How long a camera that would not tell its model keeps its USB name before it is asked again.
+#[cfg(not(target_arch = "wasm32"))]
+const NAME_RETRY: Duration = Duration::from_secs(30);
 
 /// Devices among the children of `parents`, plus the volume roots `extra`.
 pub fn devices_in(parents: &[std::path::PathBuf], extra: Vec<std::path::PathBuf>) -> Vec<Device> {
@@ -201,7 +283,7 @@ pub fn devices_in(parents: &[std::path::PathBuf], extra: Vec<std::path::PathBuf>
         let Some(dcim) = dcim_in(&root) else { continue };
         let name = root.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| root.to_string_lossy().to_string());
         if !out.iter().any(|d| d.root == root.to_string_lossy()) {
-            out.push(Device { name, path: dcim.to_string_lossy().to_string(), root: root.to_string_lossy().to_string() });
+            out.push(Device { name, path: dcim.to_string_lossy().to_string(), root: root.to_string_lossy().to_string(), camera: None });
         }
     }
     out
@@ -244,7 +326,7 @@ mod tests {
     }
 
     fn card(name: &str) -> Device {
-        Device { name: name.into(), path: format!("/v/{name}/DCIM"), root: format!("/v/{name}") }
+        Device { name: name.into(), path: format!("/v/{name}/DCIM"), root: format!("/v/{name}"), camera: None }
     }
 
     /// Wait (bounded) for `f`.

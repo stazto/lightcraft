@@ -475,6 +475,25 @@ impl Session {
         if c.error.is_some() {
             return None;
         }
+        // an object on a camera: the camera's own thumbnail, nothing to render
+        if let Some((camera, handle, _)) = super::camera::parse_ptp_path(&c.path) {
+            let cameras = self.cameras.clone();
+            let camera = camera.to_string();
+            let loader: crate::media::PreviewLoader = std::sync::Arc::new(move |_: &str, edge: usize| {
+                let bytes = cameras.thumb(&camera, handle).ok()?;
+                let max_edge = u32::try_from(edge).unwrap_or(u32::MAX);
+                lightcraft_codecs::decode_thumbnail(&bytes, max_edge).ok().map(|t| t.image)
+            });
+            return Some(crate::media::QuickJob {
+                request_id: 0,
+                photo: PhotoId(u64::MAX - slot),
+                key: candidate_thumb_key(c, edge.clamp(64, 1024)),
+                cached: Vec::new(),
+                embedded: Some((c.path.clone(), loader, edge.clamp(64, 1024))),
+                minimum_embedded_edge: None,
+                small: None,
+            });
+        }
         let id = PhotoId(u64::MAX - slot);
         let mut p = Photo::new(id, Source::File { path: c.path.clone() }, &c.name, &c.format, c.width.max(1), c.height.max(1), "");
         p.kind = c.kind;

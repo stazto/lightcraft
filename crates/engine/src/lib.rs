@@ -18,6 +18,7 @@ pub mod activity;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod apple_photos;
 pub mod availability;
+pub mod camera_fetch;
 pub(crate) mod camera_preview;
 pub mod camera_profiles;
 pub mod cmd;
@@ -284,6 +285,11 @@ pub struct Session {
     pub face_models_dir: Option<std::path::PathBuf>,
     /// Face model downloads started this session (the staged files wait in `<face_models_dir>/.downloads`).
     pub face_downloads: face_download::Downloads,
+    /// Copies from cameras over USB started this session (`library.cameraFetch`).
+    pub camera_fetches: camera_fetch::Fetches,
+    /// Cameras over USB: their open sessions (the import review lists and draws from them) and
+    /// the copies of what was picked (`library.cameraCopy`).
+    pub cameras: camera_fetch::Cameras,
     /// Reverse geocoding: the parsed place names and their download (`metadata.*PlaceNames`).
     pub place_names: cmd::geocode::PlaceNames,
     /// The user's own list of models to download (`catalog.json` in the models folder), as last read.
@@ -476,6 +482,8 @@ impl Session {
             denoise: Default::default(),
             face_models_dir: None,
             face_downloads: Default::default(),
+            camera_fetches: Default::default(),
+            cameras: Default::default(),
             place_names: Default::default(),
             face_catalog: Default::default(),
             #[cfg(not(target_arch = "wasm32"))]

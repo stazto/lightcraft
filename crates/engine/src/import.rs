@@ -34,6 +34,7 @@ use serde::{Deserialize, Serialize};
 use crate::Session;
 use crate::media::ProbeInfo;
 
+pub mod camera;
 mod commit;
 mod defaults;
 mod files;
@@ -41,6 +42,7 @@ mod job;
 mod scan;
 mod types;
 
+pub use camera::{camera_candidates, is_ptp_path, parse_ptp_path, ptp_path};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use commit::workers;
 pub use commit::{batch_size, civil, commit_prepared, system_clock};

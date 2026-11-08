@@ -161,11 +161,15 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &mut ImportDialog) {
         field(ui, "Source", |ui| {
             // (whether each source is a folder is checked off the UI thread, once)
             let joined = d.sources.join("\n");
-            let summary = crate::panels::left::fs_cached(ui, "import-source", &joined, f64::INFINITY, |s| {
-                inspect_sources(&s.split('\n').map(str::to_string).collect::<Vec<_>>())
-            })
-            .map(|summary| summary.display())
-            .unwrap_or_else(|| crate::i18n::tr_format!("{} item{}", d.sources.len(), if d.sources.len() == 1 { "" } else { "s" }));
+            let summary = if d.camera.is_some() {
+                crate::i18n::tr_format!("{} (camera over USB)", d.sources.join(", "))
+            } else {
+                crate::panels::left::fs_cached(ui, "import-source", &joined, f64::INFINITY, |s| {
+                    inspect_sources(&s.split('\n').map(str::to_string).collect::<Vec<_>>())
+                })
+                .map(|summary| summary.display())
+                .unwrap_or_else(|| crate::i18n::tr_format!("{} item{}", d.sources.len(), if d.sources.len() == 1 { "" } else { "s" }))
+            };
             let r = ui.label(egui::RichText::new(summary).color(t.text_label)).on_hover_text(joined);
             register(ui, "label:importSource", r.rect);
         });
@@ -175,11 +179,18 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &mut ImportDialog) {
                 .small(),
         );
     }
+    // a camera's files are not on disk: they can only be copied
+    let camera = d.camera.is_some();
+    if camera {
+        d.copy = true;
+        d.move_files = false;
+    }
     field(ui, "Transfer", |ui| {
         ui.spacing_mut().item_spacing.x = 4.0;
-        if crate::widgets::text_button(ui, "importAdd", crate::i18n::tr("Add in place"), !d.copy)
-            .on_hover_text(crate::i18n::tr("Reference the files where they are"))
-            .clicked()
+        if !camera
+            && crate::widgets::text_button(ui, "importAdd", crate::i18n::tr("Add in place"), !d.copy)
+                .on_hover_text(crate::i18n::tr("Reference the files where they are"))
+                .clicked()
         {
             d.copy = false;
             d.move_files = false;
@@ -190,6 +201,9 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &mut ImportDialog) {
         if r.on_hover_text(crate::i18n::tr("Copy the files (into the library's Originals/, or a folder you choose)")).clicked() {
             d.copy = true;
             d.move_files = false;
+        }
+        if camera {
+            return;
         }
         let r =
             ui.add_enabled_ui(can_copy, |ui| crate::widgets::text_button(ui, "importMove", crate::i18n::tr("Move"), d.copy && d.move_files)).inner;
@@ -202,6 +216,7 @@ pub fn body(app: &mut LightcraftApp, ui: &mut egui::Ui, d: &mut ImportDialog) {
     });
     let r = ui.label(
         egui::RichText::new(crate::i18n::tr(match (d.copy, d.move_files) {
+            (true, false) if camera => "Copy: the photos you picked are copied from the camera to the folder below, by date; the camera is left as it is.",
             (true, false) => {
                 "Copy: the files are copied to the folder below and the library uses the copies; the originals are left as they are."
             }

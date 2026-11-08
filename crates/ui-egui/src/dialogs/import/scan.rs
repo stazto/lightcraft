@@ -16,6 +16,15 @@ pub struct ScanTask {
     sources: Vec<String>,
     /// The scan's row in the activity stack (its ✕ and `activity.cancel` set `progress.cancel`).
     guard: lightcraft_engine::activity::TaskGuard,
+    /// A camera over USB being listed (instead of folders on disk).
+    camera: Option<CameraScan>,
+}
+
+/// The camera a scan lists, and why it could not when it could not.
+struct CameraScan {
+    id: String,
+    name: String,
+    error: std::sync::Arc<std::sync::Mutex<Option<String>>>,
 }
 
 /// The activity row of a scan: the review's ("Scanning folder") or the Local view's ("Reading folder").
@@ -73,8 +82,49 @@ pub fn open(app: &mut LightcraftApp, paths: Vec<String>) -> Result<Value, String
     #[cfg(target_arch = "wasm32")]
     job();
     let guard = scan_guard(app, &progress, false);
-    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse: false, sources, guard });
+    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse: false, sources, guard, camera: None });
     Ok(json!({"scanning": true}))
+}
+
+/// List `device`, a camera over USB, in the background, then open the review on its photos
+/// (oldest first; see [`poll_scan`]). Nothing is copied until the review's Import.
+pub fn open_camera(app: &mut LightcraftApp, device: &lightcraft_engine::devices::Device, album: Option<u64>) -> Result<Value, String> {
+    if app.scan.is_some() {
+        return Err("a scan is already running".into());
+    }
+    if app.review_pending.is_some() {
+        return Err("an import review is waiting for the open dialog to close".into());
+    }
+    let id = device.camera.clone().ok_or_else(|| format!("{} is not a camera over USB", device.name))?;
+    let library = std::sync::Arc::new(app.session.catalog.clone());
+    let cameras = app.session.cameras.clone();
+    let progress = std::sync::Arc::new(ScanProgress::default());
+    let error = std::sync::Arc::new(std::sync::Mutex::new(None));
+    let (tx, rx) = std::sync::mpsc::channel();
+    let (p, camera_id, failed) = (progress.clone(), id.clone(), error.clone());
+    let job = move || {
+        let candidates = match cameras.list(&camera_id) {
+            Ok(objects) => {
+                p.total.store(objects.len(), Ordering::Relaxed);
+                p.done.store(objects.len(), Ordering::Relaxed);
+                lightcraft_engine::import::camera_candidates(&camera_id, &objects, &library)
+            }
+            Err(e) => {
+                *failed.lock().unwrap_or_else(|e| e.into_inner()) = Some(e);
+                Vec::new()
+            }
+        };
+        let _ = tx.send(ScanOutput { candidates, probes: Default::default() });
+    };
+    #[cfg(not(target_arch = "wasm32"))]
+    std::thread::spawn(job);
+    #[cfg(target_arch = "wasm32")]
+    job();
+    let guard = app.session.activity.start("scan", "Reading camera", lightcraft_engine::activity::Cancel::Flag(progress.cancel.clone()));
+    guard.detail(&device.name);
+    let camera = Some(CameraScan { id, name: device.name.clone(), error });
+    app.scan = Some(ScanTask { progress, rx, copy: true, album, browse: false, sources: vec![device.name.clone()], guard, camera });
+    Ok(json!({"scanning": true, "camera": device.name}))
 }
 
 /// Show a folder's photos in the Local view (`library.browse` from the UI): the view switches at
@@ -135,7 +185,7 @@ pub fn browse(app: &mut LightcraftApp, path: &str, subfolders: Option<bool>) -> 
     #[cfg(target_arch = "wasm32")]
     job();
     let guard = scan_guard(app, &progress, true);
-    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse: true, sources: Vec::new(), guard });
+    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse: true, sources: Vec::new(), guard, camera: None });
     app.renderer.forget_imports();
     Ok(json!({"path": dir_s, "subfolders": subfolders, "scanning": true}))
 }
@@ -194,6 +244,12 @@ pub fn poll_scan(app: &mut LightcraftApp, ctx: &egui::Context) {
         }
         return;
     }
+    if let Some(cam) = &task.camera
+        && let Some(e) = cam.error.lock().unwrap_or_else(|e| e.into_inner()).take()
+    {
+        app.toast_error(ctx, format!("{}: {e}", cam.name));
+        return;
+    }
     if out.candidates.is_empty() {
         app.toast(ctx, crate::i18n::tr("No photos found"));
         return;
@@ -213,6 +269,15 @@ pub fn poll_scan(app: &mut LightcraftApp, ctx: &egui::Context) {
     // only an album the review offers (it may have been deleted while the scan ran)
     d.album = task.album.filter(|id| app.session.catalog.album(lightcraft_catalog::AlbumId(*id)).is_some_and(|a| !a.folder && !a.is_smart()));
     d.sources = task.sources;
+    if let Some(cam) = &task.camera {
+        // a camera's files are copied, by date, nothing else applies to them
+        d.camera = Some(cam.id.clone());
+        d.copy = true;
+        d.move_files = false;
+        if d.organize.is_empty() {
+            d.organize = "date".into();
+        }
+    }
     d.library = Some(app.session.library_generation());
     app.review_pending = Some(crate::state::Dialog::Import { opts: Box::new(d) });
     show_pending_review(app, ctx);
@@ -250,7 +315,7 @@ pub(crate) fn stall_scan_of(app: &mut LightcraftApp, browse: bool) -> Box<dyn st
     let progress = std::sync::Arc::new(ScanProgress::default());
     let (tx, rx) = std::sync::mpsc::channel::<ScanOutput>();
     let guard = scan_guard(app, &progress, false);
-    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse, sources: Vec::new(), guard });
+    app.scan = Some(ScanTask { progress, rx, copy: false, album: None, browse, sources: Vec::new(), guard, camera: None });
     Box::new(tx)
 }
 

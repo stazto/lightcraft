@@ -36,7 +36,7 @@ pub use body::{DEFAULT_FOLDER_TEMPLATE, body, example_destination, source_summar
 pub(crate) use body::{DIALOG_SIZE, THUMB_SIZE_DEFAULT, note_dialog_bottom, thumb_size};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use scan::cards_seen;
-pub use scan::{ScanTask, browse, open, poll_scan, running};
+pub use scan::{ScanTask, browse, open, open_camera, poll_scan, running};
 #[cfg(test)]
 pub(crate) use scan::{stall_scan, stall_scan_of};
 pub(crate) use tags::{tag_field_width, tag_help, tag_toggle, unknown_tags_warning};
@@ -79,6 +79,10 @@ pub struct ImportDialog {
     /// What to do with those: `restore` (the default: the photo comes back with its edits), `fresh`
     /// (imported as a new photo, the old record deleted) or "" (leave them) — the `onDeleted` param.
     pub on_deleted: String,
+    /// The camera over USB the candidates are on (`Device::camera`): they are copied from it
+    /// first, so only Copy applies.
+    #[serde(default)]
+    pub camera: Option<String>,
     /// The candidate clicked last: where a Shift-click range starts ([`ImportDialog::click`]).
     #[serde(skip)]
     pub last_clicked: Option<usize>,
